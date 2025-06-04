@@ -3,7 +3,7 @@ from discord import app_commands
 import os
 from dotenv import load_dotenv
 from setup.setup import *
-from commands import help_commands, ping_commands, quote_commands, pokemon_commands
+from commands import help_commands, ping_commands, quote_commands, pokemon_commands, credit_commands
 from data.game_state import *
 
 # Load the .env file
@@ -11,7 +11,7 @@ load_dotenv()
 
 # Variables:
 version = "0.1"
-sync_commands = True # Set to False to disable command syncing
+sync_commands = False # Set to False to disable command syncing
 intents = discord.Intents.default()
 intents.messages = True
 intents.message_content = True  # Need this to read message content
@@ -29,6 +29,7 @@ help_commands.setup(tree)
 ping_commands.setup(tree)
 quote_commands.setup(tree)
 pokemon_commands.setup(tree)
+credit_commands.setup(tree)
 
 @client.event
 async def on_ready():

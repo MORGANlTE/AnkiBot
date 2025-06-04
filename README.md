@@ -55,6 +55,8 @@ AnkiBot
 
 Contributions are welcome! Please feel free to submit a pull request or open an issue for any suggestions or improvements.
 
+If you add **ANYTHING** at all, please drop your name in the `data/contributers.py`! All help counts.
+
 ## License
 
 This project is licensed under the MIT License. Feel free to propose any changes.

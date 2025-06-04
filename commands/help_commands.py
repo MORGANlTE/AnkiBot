@@ -8,14 +8,17 @@ async def help_command(interaction):
         description="Available commands:",
         color=discord.Color.teal(),
     )
+    embed.set_thumbnail(
+        url="https://i.ibb.co/GvXCXvcy/logo.png",
+    )
     embed.add_field(
         name="Informational",
         value="** **",
         inline=False,
     )
     embed.add_field(
-        name=":thinking: /quote",
-        value="Random quote",
+        name=":thinking: This is still a work in progress",
+        value=":)",
         inline=True,
     )
     embed.add_field(
@@ -24,8 +27,7 @@ async def help_command(interaction):
         inline=False,
     )
     embed.set_footer(
-        text="Made by _morganite",
-        icon_url="https://iili.io/JlxAR7R.png",
+        text="Made by the volunteers of the AnkiMon project",
     )
 
     await interaction.response.send_message(embed=embed)
