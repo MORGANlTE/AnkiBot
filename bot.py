@@ -1,0 +1,56 @@
+import discord
+from discord import app_commands
+import os
+from dotenv import load_dotenv
+from setup.setup import *
+from commands import help_commands, ping_commands, quote_commands, pokemon_commands
+from data.game_state import *
+
+# Load the .env file
+load_dotenv()
+
+# Variables:
+version = "0.1"
+sync_commands = True # Set to False to disable command syncing
+intents = discord.Intents.default()
+intents.messages = True
+intents.message_content = True  # Need this to read message content
+
+# Check the value of the ENVIRONMENT variable
+guilds = setup_guilds()
+
+# Functions:
+has_synced = False
+client = discord.Client(intents=intents)
+tree = app_commands.CommandTree(client)
+
+# Register command groups
+help_commands.setup(tree)
+ping_commands.setup(tree)
+quote_commands.setup(tree)
+pokemon_commands.setup(tree)
+
+@client.event
+async def on_ready():
+    global has_synced
+    print("Finished setting up commands")
+    print(f"Logged in as {client.user} (ID: {client.user.id})")
+    
+    # Only sync commands once
+    if not has_synced and sync_commands:
+        await tree.sync()
+        has_synced = True
+        print("Currently supporting {} guilds".format(len(client.guilds)))
+
+@client.event
+async def on_message(message):
+    # Ignore messages from the bot itself
+    if message.author == client.user or message.author.bot:
+        return
+    
+    # Check if there's an active Pokemon guessing game in this channel
+    channel_id = message.channel.id
+    if channel_id in active_pokemon_guesses and active_pokemon_guesses[channel_id]['active']:
+        await evaluate_guess(message.content, active_pokemon_guesses[channel_id]['pokemon_name'], message.channel, message.author)
+
+client.run(os.getenv("TOKEN"))
