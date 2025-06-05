@@ -9,6 +9,7 @@ from typing import Optional
 # {
 #   "trade_id": {
 #     "initiator": {"user_id": user_id, "pokemon_code": code, "pokemon_level": level, "confirmed": bool, "message": message},
+#     "recipient": {"user_id": user_id, "pokemon_code": code, "pokemon_level": level, "confirmed": bool, "message": message}
 #   }
 # }
 active_trades = {}
