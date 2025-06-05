@@ -154,17 +154,40 @@ async def unscramble_the_pokemon_name(interaction: discord.Interaction, pokemon_
 
         embed = discord.Embed(
             title="Unscramble This Pokémon!",
-            description=f"The scrambled name is: **{scrambled_name.capitalize()}**\n\nType your guess in the chat!",
+            description=f"The scrambled name is: \n**{scrambled_name}**\n\nType your guess in the chat!",
             color=discord.Color.green()
         )
+
+        # Take the image from the original Pokémon
+        sprite_url = data['sprites']['front_default']
+        # transform the sprite image into very pixellated image
+        if sprite_url:
+            async with session.get(sprite_url) as response:
+                if response.status == 200:
+                    image_data = await response.read()
+                    img = Image.open(io.BytesIO(image_data))
+                    # Resize to create a pixelated effect
+                    img_byte_arr = io.BytesIO()
+                    image_tiny = img.resize((6,6))    # resize it to a relatively tiny size
+                    # pixeliztion is resizing a smaller image into a larger one with some resampling
+                    pixelated = image_tiny.resize(img.size,Image.NEAREST)   # resizing the smaller image to the original size
+                    pixelated.save(img_byte_arr, format='PNG')  # Save with low quality to pixelate
+                    img_byte_arr.seek(0)
+                    file = discord.File(img_byte_arr, filename="unscrambled_pokemon.png")
+        else:
+            file = None
         
         # Store the current Pokemon being guessed
         active_pokemon_guesses[interaction.channel_id] = {
             'pokemon_name': name.lower(), # Store original lowercase name for checking
             'active': True,
         }
-        
-        await interaction.followup.send(embed=embed)
+
+        if file:
+            embed.set_image(url="attachment://unscrambled_pokemon.png")
+            await interaction.followup.send(file=file, embed=embed)
+        else:
+          await interaction.followup.send(embed=embed)
 
 async def play_random_minigame(interaction: discord.Interaction, random_pokemon_id: int):
     """
@@ -172,9 +195,9 @@ async def play_random_minigame(interaction: discord.Interaction, random_pokemon_
     """
 
     minigames = [
-        who_is_that_pokemon,
+        # who_is_that_pokemon,
         unscramble_the_pokemon_name,
-        who_is_that_pokemon_visible
+        # who_is_that_pokemon_visible
     ]
     
     chosen_minigame = random.choice(minigames)
