@@ -195,9 +195,9 @@ async def play_random_minigame(interaction: discord.Interaction, random_pokemon_
     """
 
     minigames = [
-        # who_is_that_pokemon,
+        who_is_that_pokemon,
         unscramble_the_pokemon_name,
-        # who_is_that_pokemon_visible
+        who_is_that_pokemon_visible
     ]
     
     chosen_minigame = random.choice(minigames)
