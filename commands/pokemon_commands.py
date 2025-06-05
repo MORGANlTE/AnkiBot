@@ -194,7 +194,7 @@ async def pokemon_weaknesses(interaction: discord.Interaction, pokemon: str):
 
         await interaction.followup.send(embed=embed)
 
-@app_commands.allowed_installs(guilds=True, users=True)
+@app_commands.allowed_installs(guilds=True, users=False)
 @app_commands.allowed_contexts(guilds=True, dms=False, private_channels=True)
 @pokemon_group.command(name="guess", description="Guess the Pokémon from its silhouette.")
 async def pokemon_guess(interaction: discord.Interaction):
