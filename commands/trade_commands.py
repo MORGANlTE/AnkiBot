@@ -2,16 +2,13 @@ import discord
 from discord import app_commands
 import aiohttp
 import asyncio
-from typing import Dict, List, Optional
+from typing import Optional
 
 # Dictionary to store active trades
 # Structure:
 # {
 #   "trade_id": {
-#     "initiator": {"user_id": user_id, "pokemon_code": code, "confirmed": bool},
-#     "recipient": {"user_id": user_id, "pokemon_code": code, "confirmed": bool},
-#     "message_id": message_id,
-#     "channel_id": channel_id
+#     "initiator": {"user_id": user_id, "pokemon_code": code, "pokemon_level": level, "confirmed": bool, "message": message},
 #   }
 # }
 active_trades = {}
@@ -34,18 +31,47 @@ def generate_trade_id(user1_id: int, user2_id: int) -> str:
     """Generate a unique trade ID based on the users involved."""
     return f"{min(user1_id, user2_id)}_{max(user1_id, user2_id)}"
 
+@app_commands.allowed_installs(guilds=True, users=True)
+@app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
 @app_commands.describe(
     pokemon_code="Your Pokemon code (comma-separated numbers)",
-    user="The user you want to trade with"
+    user="The user you want to trade with",
+    user_id="The user ID you want to trade with (alternative to mentioning a user)"
 )
-async def trade_command(interaction: discord.Interaction, pokemon_code: str, user: discord.User):
+async def trade_command(interaction: discord.Interaction, pokemon_code: str, 
+                        user: Optional[discord.User] = None, 
+                        user_id: Optional[str] = None):
+    # Figure out which user to trade with based on provided parameters
+    target_user = user
+    
+    # If user wasn't provided but user_id was, try to fetch the user
+    if target_user is None and user_id is not None:
+        try:
+            # Try to convert the string to an integer (user ID)
+            user_id_int = int(user_id.strip())
+            try:
+                # Try to fetch the user
+                target_user = await interaction.client.fetch_user(user_id_int)
+            except (discord.NotFound, discord.HTTPException):
+                await interaction.response.send_message(f"I couldn't find a user with ID: {user_id}. Please check the ID and try again.", ephemeral=True)
+                return
+        except ValueError:
+            # If the string isn't a valid integer
+            await interaction.response.send_message("Please provide a valid user ID (numbers only).", ephemeral=True)
+            return
+    
+    # Handle case where neither user nor user_id was provided
+    if target_user is None:
+        await interaction.response.send_message("Please specify a user to trade with, either by mentioning them or providing their user ID.", ephemeral=True)
+        return
+    
     # Check if trading with self
-    if user.id == interaction.user.id:
+    if target_user.id == interaction.user.id:
         await interaction.response.send_message("You can't trade with yourself!", ephemeral=True)
         return
     
     # Check if the user is a bot
-    if user.bot:
+    if target_user.bot:
         await interaction.response.send_message("You can't trade with a bot!", ephemeral=True)
         return
     
@@ -57,6 +83,7 @@ async def trade_command(interaction: discord.Interaction, pokemon_code: str, use
             return
         
         pokemon_id = code_parts[0]
+        pokemon_level = code_parts[1] if len(code_parts) > 1 else 0
     except ValueError:
         await interaction.response.send_message("Invalid Pokemon code format. Please provide comma-separated numbers only.", ephemeral=True)
         return
@@ -64,25 +91,26 @@ async def trade_command(interaction: discord.Interaction, pokemon_code: str, use
     await interaction.response.defer(ephemeral=True)
     
     # Generate a trade ID
-    trade_id = generate_trade_id(interaction.user.id, user.id)
+    trade_id = generate_trade_id(interaction.user.id, target_user.id)
     
     # Check if there's already an active trade between these users
     if trade_id in active_trades:
         # If the recipient is initiating a trade, handle it as a trade response
         existing_trade = active_trades[trade_id]
         
-        if existing_trade["initiator"]["user_id"] == user.id and existing_trade["recipient"]["user_id"] == interaction.user.id:
+        if existing_trade["initiator"]["user_id"] == target_user.id and existing_trade["recipient"]["user_id"] == interaction.user.id:
             # The recipient is responding to an existing trade
             existing_trade["recipient"]["pokemon_code"] = pokemon_code
+            existing_trade["recipient"]["pokemon_level"] = pokemon_level
             
             # Update the trade message with both Pokemon
-            await update_trade_message(interaction, trade_id)
+            await update_trade_messages(interaction, trade_id)
             
-            await interaction.followup.send("You've added your Pokemon to the trade. Please check the channel to confirm.", ephemeral=True)
+            await interaction.followup.send("You've added your Pokemon to the trade. Please check the trade message to confirm.", ephemeral=True)
             return
         else:
             # There's already a trade between these users but in a different direction
-            await interaction.followup.send(f"There's already an active trade with {user.display_name}. Please complete that trade first.", ephemeral=True)
+            await interaction.followup.send(f"There's already an active trade with {target_user.display_name}. Please complete that trade first.", ephemeral=True)
             return
     
     # Create a new trade
@@ -90,15 +118,17 @@ async def trade_command(interaction: discord.Interaction, pokemon_code: str, use
         "initiator": {
             "user_id": interaction.user.id,
             "pokemon_code": pokemon_code,
-            "confirmed": False
+            "pokemon_level": pokemon_level,
+            "confirmed": False,
+            "message": None
         },
         "recipient": {
-            "user_id": user.id,
+            "user_id": target_user.id,
             "pokemon_code": None,
-            "confirmed": False
-        },
-        "message_id": None,
-        "channel_id": interaction.channel_id
+            "pokemon_level": None,
+            "confirmed": False,
+            "message": None
+        }
     }
     
     # Fetch Pokemon data to display
@@ -116,53 +146,91 @@ async def trade_command(interaction: discord.Interaction, pokemon_code: str, use
     # Create the initial trade message
     embed = discord.Embed(
         title="Pokemon Trade Request",
-        description=f"{interaction.user.mention} wants to trade with {user.mention}!",
+        description=f"{interaction.user.mention} wants to trade with {target_user.mention}!",
         color=discord.Color.blue()
     )
     
     embed.add_field(
         name=f"{interaction.user.display_name}'s Pokemon",
-        value=f"{pokemon_name}",
+        value=f"{pokemon_name} (Level {pokemon_level})",
         inline=True
     )
     
     embed.add_field(
-        name=f"{user.display_name}'s Pokemon",
+        name=f"{target_user.display_name}'s Pokemon",
         value="Waiting for response...",
         inline=True
     )
     
     if pokemon_sprite:
         embed.set_thumbnail(url=pokemon_sprite)
+
     
     # Create action buttons
     view = TradeView(trade_id)
     
-    # Send the trade message to the channel
+    # Send the trade message to both users
     await interaction.followup.send("Trade request sent!", ephemeral=True)
-    trade_message = await interaction.channel.send(
-        content=f"{user.mention}, {interaction.user.display_name} wants to trade with you! Use `/trade` to respond.",
-        embed=embed,
-        view=view
-    )
     
-    # Store the message ID for later updates
-    active_trades[trade_id]["message_id"] = trade_message.id
+    # Check if we're in a DM channel or guild channel
+    is_dm = isinstance(interaction.channel, discord.DMChannel)
+    
+    # Send message differently based on channel type
+    try:
+        if is_dm:
+            # In DMs, send directly to the user
+            initiator_msg = await interaction.user.send(
+                content=f"Trade with {target_user.display_name} (ID: {target_user.id})",
+                embed=embed,
+                view=view
+            )
+        else:
+            # In guild channels, send to the channel
+            initiator_msg = await interaction.channel.send(
+                content=f"Trade with {target_user.display_name}",
+                embed=embed,
+                view=view
+            )
+        
+        active_trades[trade_id]["initiator"]["message"] = initiator_msg
+    except discord.Forbidden:
+        # Handle case where we can't send the message
+        await interaction.followup.send("I couldn't send a message with the trade details. Please check your privacy settings.", ephemeral=True)
+        del active_trades[trade_id]
+        return
+    except Exception as e:
+        # Handle any other exceptions
+        print(f"Error sending trade message: {e}")
+        await interaction.followup.send("An error occurred while setting up the trade. Please try again later.", ephemeral=True)
+        del active_trades[trade_id]
+        return
+    
+    # Try to send to recipient in DM
+    try:
+        recipient_msg = await target_user.send(
+            content=f"{interaction.user.display_name} (ID: {interaction.user.id}) wants to trade with you! Use `/trade pokemon_code:[your-pokemon-code] user_id:{interaction.user.id}` to respond.",
+            embed=embed,
+            view=view
+        )
+        active_trades[trade_id]["recipient"]["message"] = recipient_msg
+    except discord.Forbidden:
+        # If we can't DM, try to notify in the same channel if it's not a DM
+        if not is_dm and hasattr(interaction.channel, 'send'):
+            try:
+                await interaction.channel.send(
+                    content=f"{target_user.mention}, {interaction.user.display_name} wants to trade with you! Use `/trade pokemon_code:[your-pokemon-code] user_id:{interaction.user.id}` to respond.",
+                    embed=None
+                )
+            except Exception:
+                pass
+    except Exception as e:
+        # Handle any other exceptions
+        print(f"Error sending trade message to recipient: {e}")
 
-async def update_trade_message(interaction: discord.Interaction, trade_id: str):
-    """Update the trade message with current information."""
+async def update_trade_messages(interaction: discord.Interaction, trade_id: str):
+    """Update the trade messages for both users."""
     trade_info = active_trades.get(trade_id)
     if not trade_info:
-        return
-    
-    # Get the channel and message
-    channel = interaction.client.get_channel(trade_info["channel_id"])
-    if not channel:
-        return
-    
-    try:
-        message = await channel.fetch_message(trade_info["message_id"])
-    except discord.NotFound:
         return
     
     # Get user objects
@@ -190,10 +258,11 @@ async def update_trade_message(interaction: discord.Interaction, trade_id: str):
     if initiator_pokemon_data:
         initiator_pokemon_name = initiator_pokemon_data['name'].capitalize()
         initiator_pokemon_sprite = initiator_pokemon_data['sprites']['front_default']
+        initiator_pokemon_level = trade_info["initiator"]["pokemon_level"]
         
         embed.add_field(
             name=f"{initiator.display_name}'s Pokemon",
-            value=f"{initiator_pokemon_name}" + (" ✅" if trade_info["initiator"]["confirmed"] else ""),
+            value=f"{initiator_pokemon_name} (Level {initiator_pokemon_level})" + (" ✅" if trade_info["initiator"]["confirmed"] else ""),
             inline=True
         )
         
@@ -204,10 +273,11 @@ async def update_trade_message(interaction: discord.Interaction, trade_id: str):
     if recipient_pokemon_data:
         recipient_pokemon_name = recipient_pokemon_data['name'].capitalize()
         recipient_pokemon_sprite = recipient_pokemon_data['sprites']['front_default']
+        recipient_pokemon_level = trade_info["recipient"]["pokemon_level"]
         
         embed.add_field(
             name=f"{recipient.display_name}'s Pokemon",
-            value=f"{recipient_pokemon_name}" + (" ✅" if trade_info["recipient"]["confirmed"] else ""),
+            value=f"{recipient_pokemon_name} (Level {recipient_pokemon_level})" + (" ✅" if trade_info["recipient"]["confirmed"] else ""),
             inline=True
         )
         
@@ -223,9 +293,24 @@ async def update_trade_message(interaction: discord.Interaction, trade_id: str):
             inline=True
         )
     
-    # Update the message
+    # Update messages for both users
     view = TradeView(trade_id)
-    await message.edit(embed=embed, view=view)
+    
+    # Update initiator's message if exists
+    initiator_message = trade_info["initiator"]["message"]
+    if initiator_message:
+        try:
+            await initiator_message.edit(embed=embed, view=view)
+        except (discord.NotFound, discord.Forbidden, discord.HTTPException):
+            pass  # Handle various Discord API errors
+    
+    # Update recipient's message if exists
+    recipient_message = trade_info["recipient"]["message"]
+    if recipient_message:
+        try:
+            await recipient_message.edit(embed=embed, view=view)
+        except (discord.NotFound, discord.Forbidden, discord.HTTPException):
+            pass  # Handle various Discord API errors
 
 class TradeView(discord.ui.View):
     def __init__(self, trade_id: str):
@@ -262,8 +347,8 @@ class TradeView(discord.ui.View):
         
         await interaction.response.send_message("You have confirmed the trade.", ephemeral=True)
         
-        # Update the trade message
-        await update_trade_message(interaction, self.trade_id)
+        # Update the trade messages
+        await update_trade_messages(interaction, self.trade_id)
         
         # Check if both users have confirmed
         if trade_info["initiator"]["confirmed"] and trade_info["recipient"]["confirmed"]:
@@ -284,16 +369,27 @@ class TradeView(discord.ui.View):
             return
         
         # Cancel the trade
-        del active_trades[self.trade_id]
         
-        # Update the message
-        channel = interaction.client.get_channel(trade_info["channel_id"])
-        if channel:
+        # Update the messages
+        initiator_message = trade_info["initiator"]["message"]
+        recipient_message = trade_info["recipient"]["message"]
+        
+        cancel_message = "This trade has been cancelled."
+        
+        if initiator_message:
             try:
-                message = await channel.fetch_message(trade_info["message_id"])
-                await message.edit(content="This trade has been cancelled.", embed=None, view=None)
-            except discord.NotFound:
-                pass
+                await initiator_message.edit(content=cancel_message, embed=None, view=None)
+            except (discord.NotFound, discord.Forbidden, discord.HTTPException):
+                pass  # Handle various Discord API errors
+                
+        if recipient_message:
+            try:
+                await recipient_message.edit(content=cancel_message, embed=None, view=None)
+            except (discord.NotFound, discord.Forbidden, discord.HTTPException):
+                pass  # Handle various Discord API errors
+        
+        # Remove from active trades
+        del active_trades[self.trade_id]
         
         await interaction.response.send_message("You have cancelled the trade.", ephemeral=True)
 
@@ -323,20 +419,26 @@ async def complete_trade(interaction: discord.Interaction, trade_id: str):
     except discord.Forbidden:
         pass  # Can't send DM to recipient
     
-    # Update the trade message
-    channel = interaction.client.get_channel(trade_info["channel_id"])
-    if channel:
+    # Update the trade messages
+    complete_message = f"Trade completed between {initiator.mention} and {recipient.mention}!"
+    
+    initiator_message = trade_info["initiator"]["message"]
+    recipient_message = trade_info["recipient"]["message"]
+    
+    if initiator_message:
         try:
-            message = await channel.fetch_message(trade_info["message_id"])
-            await message.edit(
-                content=f"Trade completed between {initiator.mention} and {recipient.mention}!",
-                view=None
-            )
-        except discord.NotFound:
-            pass
+            await initiator_message.edit(content=complete_message, view=None)
+        except (discord.NotFound, discord.Forbidden, discord.HTTPException):
+            pass  # Handle various Discord API errors
+            
+    if recipient_message:
+        try:
+            await recipient_message.edit(content=complete_message, view=None)
+        except (discord.NotFound, discord.Forbidden, discord.HTTPException):
+            pass  # Handle various Discord API errors
     
     # Remove the trade from active trades
     del active_trades[trade_id]
 
 def setup(tree: app_commands.CommandTree):
-    tree.command(name="trade", description="Trade Pokemon with another user")(trade_command)
+    tree.command(name="trade", description="Trade Pokémon with another user")(trade_command)
