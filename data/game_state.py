@@ -4,8 +4,10 @@ import discord
 active_pokemon_guesses = {}
 
 async def evaluate_guess(msg_content: str, pkmn_name: str, channel: discord.channel.TextChannel, author: discord.User):
+  """
+  Evaluates a guess made by a user in the Pokémon guessing game."""
   # we check if the first character is the same as the first character of the pokemon name
-  if not msg_content.startswith(pkmn_name[0].lower()):
+  if not msg_content.lower().startswith(pkmn_name[0].lower()):
       return
   # Check if the message content matches the Pokemon name (case insensitive)
   if msg_content.lower() == pkmn_name.lower():

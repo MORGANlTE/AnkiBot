@@ -2,35 +2,13 @@ import discord
 from discord import app_commands
 import aiohttp
 import asyncio
-import io
-from PIL import Image, ImageEnhance
 import random
 from data.pokemon import TYPE_COLORS, ALL_POKEMON_TYPES
-from data.game_state import active_pokemon_guesses
-
-POKEAPI_BASE_URL = "https://pokeapi.co/api/v2/"
+from data.help_functions import fetch_data, POKEAPI_BASE_URL
+from data.minigames import play_random_minigame
 
 # Command Group
 pokemon_group = app_commands.Group(name="pokemon", description="Commands related to Pokémon.")
-
-async def fetch_data(session: aiohttp.ClientSession, url: str):
-    """Helper function to fetch data from a URL."""
-    try:
-        async with session.get(url) as response:
-            if response.status == 200:
-                return await response.json()
-            elif response.status == 404:
-                return None # Not found
-            else:
-                # Log or handle other HTTP errors if necessary
-                print(f"Error fetching {url}: Status {response.status}")
-                return "error" # Generic error indicator
-    except aiohttp.ClientError as e:
-        print(f"AIOHTTP client error fetching {url}: {e}")
-        return "error"
-    except asyncio.TimeoutError:
-        print(f"Timeout error fetching {url}")
-        return "error"
 
 @app_commands.allowed_installs(guilds=True, users=True)
 @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
@@ -196,83 +174,13 @@ async def pokemon_weaknesses(interaction: discord.Interaction, pokemon: str):
 
 @app_commands.allowed_installs(guilds=True, users=False)
 @app_commands.allowed_contexts(guilds=True, dms=False, private_channels=True)
-@pokemon_group.command(name="guess", description="Guess the Pokémon from its silhouette.")
+@pokemon_group.command(name="minigame", description="Play a minigame! From guess the pokemon, to a lot more!")
 async def pokemon_guess(interaction: discord.Interaction):
     await interaction.response.defer()
     
     # Get a random Pokemon ID (there are around 1010 Pokemon in the National Pokedex)
     pokemon_id = random.randint(1, 1010)
-    
-    async with aiohttp.ClientSession() as session:
-        # Fetch the Pokemon data
-        data = await fetch_data(session, f"{POKEAPI_BASE_URL}pokemon/{pokemon_id}")
-        print("Url:", f"{POKEAPI_BASE_URL}pokemon/{pokemon_id}")
-        
-        if data is None or data == "error":
-            await interaction.followup.send("Sorry, an error occurred while fetching Pokémon data.")
-            return
-        
-        name = data['name'].capitalize()
-        sprite_url = data['sprites']['front_default']
-        
-        if not sprite_url:
-            await interaction.followup.send("This Pokémon doesn't have a sprite available.")
-            return
-        
-        # Download the sprite image
-        async with session.get(sprite_url) as response:
-            if response.status != 200:
-                await interaction.followup.send("I couldn't download the Pokémon sprite.")
-                return
-            
-            image_data = await response.read()
-            
-        # Process the image - create a silhouette
-        img = Image.open(io.BytesIO(image_data))
-        
-        # Convert to RGB mode first to ensure compatibility
-        if img.mode != 'RGBA':
-            img = img.convert('RGBA')
-            
-        # Create a silhouette by converting to black
-        # Instead of using brightness which causes errors, we'll create a silhouette directly
-        width, height = img.size
-        silhouette = Image.new('RGBA', (width, height), color='black')
-        
-        # Create a mask from the original image's alpha channel if it exists
-        if 'A' in img.getbands():
-            mask = img.getchannel('A')
-            silhouette.putalpha(mask)
-        else:
-            # If no alpha channel, create a mask based on non-white pixels
-            # Convert to grayscale first
-            gray = img.convert('L')
-            # Create a binary mask where non-background pixels are white
-            threshold = 3  # Adjust if needed
-            mask = gray.point(lambda p: 255 if p > threshold else 0)
-            silhouette.putalpha(mask)
-        
-        # Save the processed image to a BytesIO object
-        img_byte_arr = io.BytesIO()
-        silhouette.save(img_byte_arr, format='PNG')
-        img_byte_arr.seek(0)  # Move to the beginning of BytesIO
-        
-        # Send the silhouette image and start the guessing game
-        file = discord.File(img_byte_arr, filename="who_is_that_pokemon.png")
-        embed = discord.Embed(
-            title="Who's that Pokémon?",
-            description="Guess the Pokémon in the chat!",
-            color=discord.Color.blue()
-        )
-        embed.set_image(url="attachment://who_is_that_pokemon.png")
-        
-        # Store the current Pokemon being guessed
-        active_pokemon_guesses[interaction.channel_id] = {
-            'pokemon_name': name.lower(),
-            'active': True
-        }
-        
-        await interaction.followup.send(file=file, embed=embed)
+    await play_random_minigame(interaction, pokemon_id)
 
 def setup(tree: app_commands.CommandTree):
     tree.add_command(pokemon_group)
