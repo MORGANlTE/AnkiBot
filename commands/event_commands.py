@@ -1,6 +1,6 @@
 import discord
 from discord import app_commands
-from discord.ext.commands import has_permissions
+from discord.app_commands import default_permissions
 import json
 import datetime
 from typing import Optional, List
@@ -11,17 +11,13 @@ from data.events import (
     generate_pokemon_image, event_name_autocomplete, get_pokemon_names
 )
 
-# Create event group
-event_group = app_commands.Group(name="event", description="Commands for managing events.")
 
 # Event type choices
 EVENT_TYPE_CHOICES = [
     app_commands.Choice(name="Catch Event", value="catch")
 ]
 
-@app_commands.allowed_installs(guilds=True, users=False)
-@app_commands.allowed_contexts(guilds=True, dms=False, private_channels=False)
-@event_group.command(name="create", description="Create a new event (Admin only)")
+@app_commands.command(name="create", description="Create a new event (Admin only)")
 @app_commands.describe(
     name="Name of the event",
     event_type="Type of event",
@@ -30,7 +26,6 @@ EVENT_TYPE_CHOICES = [
     pokemon_list="Comma-separated list of Pokémon IDs to catch (for catch events)"
 )
 @app_commands.choices(event_type=EVENT_TYPE_CHOICES)
-@has_permissions(administrator=True)
 async def event_create(
     interaction: discord.Interaction, 
     name: str, 
@@ -74,7 +69,7 @@ async def event_create(
 
 @app_commands.allowed_installs(guilds=True, users=True)
 @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
-@event_group.command(name="list", description="List all active events")
+@app_commands.command(name="list", description="List all events in this server")
 async def event_list(interaction: discord.Interaction):
     await interaction.response.defer()
     
@@ -123,7 +118,7 @@ async def event_list(interaction: discord.Interaction):
 
 @app_commands.allowed_installs(guilds=True, users=True)
 @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
-@event_group.command(name="info", description="View details about an event")
+@app_commands.command(name="info", description="View information about a specific event")
 @app_commands.describe(
     event_name="The event to view"
 )
@@ -196,7 +191,7 @@ async def event_info(interaction: discord.Interaction, event_name: str):
 
 @app_commands.allowed_installs(guilds=True, users=True)
 @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
-@event_group.command(name="enter", description="Enter an event by submitting a JSON file with your caught Pokémon")
+@app_commands.command(name="enter", description="Enter an event by submitting your Pokémon data")
 @app_commands.describe(
     event_name="The event to enter",
     file="JSON file with your caught Pokémon data"
@@ -339,7 +334,7 @@ async def event_enter(interaction: discord.Interaction, event_name: str, file: d
 
 @app_commands.allowed_installs(guilds=True, users=True)
 @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
-@event_group.command(name="leaderboard", description="View the leaderboard for an event")
+@app_commands.command(name="leaderboard", description="View the leaderboard for an event")
 @app_commands.describe(
     event_name="The event to view the leaderboard for"
 )
@@ -441,14 +436,11 @@ async def event_leaderboard(interaction: discord.Interaction, event_name: str):
 
 
 
-@app_commands.allowed_installs(guilds=True, users=True)
-@app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
-@event_group.command(name="delete", description="Delete an event (Admin only)")
+@app_commands.command(name="delete", description="Delete an existing event (Admin only)")
 @app_commands.describe(
     event_name="The event to delete"
 )
 @app_commands.autocomplete(event_name=event_name_autocomplete)
-@has_permissions(administrator=True)
 async def event_delete(interaction: discord.Interaction, event_name: str):
     await interaction.response.defer(ephemeral=True)
     
@@ -462,4 +454,21 @@ async def event_delete(interaction: discord.Interaction, event_name: str):
     await interaction.followup.send(f"Event '{event_name}' deleted successfully!", ephemeral=True)
 
 def setup(tree: app_commands.CommandTree):
+    admin_perms = discord.Permissions(administrator=True)
+
+    event_group = app_commands.Group(name="event", description="Commands for managing events.")
+    event_group.add_command(event_list)
+    event_group.add_command(event_info)
+    event_group.add_command(event_enter)
+    event_group.add_command(event_leaderboard)
+    event_group_admin = app_commands.Group(
+        name="adminevent", 
+        description="Admin commands for managing events.",
+        default_permissions=admin_perms
+    )
+    
+    event_group_admin.add_command(event_create)
+    event_group_admin.add_command(event_delete)
+
     tree.add_command(event_group)
+    tree.add_command(event_group_admin)

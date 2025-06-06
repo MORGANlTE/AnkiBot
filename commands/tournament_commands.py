@@ -12,14 +12,12 @@ from data.tournament import (
 # Create tournament group
 tournament_group = app_commands.Group(name="tournament", description="Commands for managing tournaments.")
 
-@app_commands.allowed_installs(guilds=True, users=False)
-@app_commands.allowed_contexts(guilds=True, dms=False, private_channels=False)
 @tournament_group.command(name="create", description="Create a new tournament (Admin only)")
+@has_permissions(administrator=True)
 @app_commands.describe(
     name="Name of the tournament",
     size="Maximum number of participants (2-64)"
 )
-@has_permissions(administrator=True)
 async def tournament_create(interaction: discord.Interaction, name: str, size: int):
     await interaction.response.defer()
     
@@ -37,8 +35,6 @@ async def tournament_create(interaction: discord.Interaction, name: str, size: i
     
     await interaction.followup.send(f"Tournament '{name}' created successfully! Use `/tournament add {name} @user` to add participants.")
 
-@app_commands.allowed_installs(guilds=True, users=False)
-@app_commands.allowed_contexts(guilds=True, dms=False, private_channels=False)
 @tournament_group.command(name="add", description="Add a user to a tournament")
 @app_commands.describe(
     tournament_name="Name of the tournament",
@@ -140,15 +136,13 @@ async def tournament_leave(interaction: discord.Interaction, tournament_name: st
     
     await interaction.followup.send(f"You have left tournament '{tournament_name}'.")
 
-@app_commands.allowed_installs(guilds=True, users=False)
-@app_commands.allowed_contexts(guilds=True, dms=False, private_channels=False)
 @tournament_group.command(name="remove", description="Remove a user from a tournament (Admin only)")
+@has_permissions(administrator=True)
 @app_commands.describe(
     tournament_name="Name of the tournament",
     user="User to remove from the tournament"
 )
 @app_commands.autocomplete(tournament_name=tournament_name_autocomplete)
-@has_permissions(administrator=True)
 async def tournament_remove(interaction: discord.Interaction, tournament_name: str, user: discord.User):
     await interaction.response.defer()
     
@@ -353,16 +347,14 @@ async def tournament_list(interaction: discord.Interaction):
     
     await interaction.followup.send(embed=embed)
 
-@app_commands.allowed_installs(guilds=True, users=False)
-@app_commands.allowed_contexts(guilds=True, dms=False, private_channels=False)
 @tournament_group.command(name="match", description="Report a match result")
+@has_permissions(administrator=True)
 @app_commands.describe(
     tournament_name="Name of the tournament",
     match_id="ID of the match (visible on the bracket)",
     winner="The user who won the match"
 )
 @app_commands.autocomplete(tournament_name=tournament_name_autocomplete)
-@has_permissions(administrator=True)
 async def tournament_match(interaction: discord.Interaction, tournament_name: str, match_id: int, winner: discord.User):
     await interaction.response.defer()
     
@@ -458,14 +450,12 @@ async def tournament_match(interaction: discord.Interaction, tournament_name: st
     
     await interaction.followup.send(embed=embed, file=file)
 
-@app_commands.allowed_installs(guilds=True, users=False)
-@app_commands.allowed_contexts(guilds=True, dms=False, private_channels=False)
 @tournament_group.command(name="delete", description="Delete a tournament (Admin only)")
+@has_permissions(administrator=True)
 @app_commands.describe(
     tournament_name="Name of the tournament to delete"
 )
 @app_commands.autocomplete(tournament_name=tournament_name_autocomplete)
-@has_permissions(administrator=True)
 async def tournament_delete(interaction: discord.Interaction, tournament_name: str):
     await interaction.response.defer(ephemeral=True)
     

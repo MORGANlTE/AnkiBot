@@ -10,8 +10,8 @@ from data.minigames import active_pokemon_guesses, evaluate_guess
 load_dotenv()
 
 # Variables:
-version = "0.2"
-sync_commands = False # Set to False to disable command syncing
+version = "0.3"
+sync_commands = True # Set to False to disable command syncing
 intents = discord.Intents.default()
 intents.messages = True
 intents.message_content = True  # Need this to read message content
