@@ -165,3 +165,7 @@ cython_debug/
 
 .env
 .vscode/settings.json
+
+tournament_data.json
+event_data.json
+minigame_data.json

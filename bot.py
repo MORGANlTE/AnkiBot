@@ -3,8 +3,8 @@ from discord import app_commands
 import os
 from dotenv import load_dotenv
 from setup.setup import *
-from commands import help_commands, ping_commands, quote_commands, pokemon_commands, credit_commands, trade_commands
-from data.game_state import *
+from commands import help_commands, ping_commands, quote_commands, pokemon_commands, credit_commands, trade_commands, tournament_commands, event_commands
+from data.minigames import active_pokemon_guesses, evaluate_guess
 
 # Load the .env file
 load_dotenv()
@@ -32,6 +32,8 @@ ping_commands.setup(tree)
 pokemon_commands.setup(tree)
 credit_commands.setup(tree)
 trade_commands.setup(tree)
+event_commands.setup(tree) 
+tournament_commands.setup(tree)  # Uncommented this line to register tournament commands
 
 @client.event
 async def on_ready():
