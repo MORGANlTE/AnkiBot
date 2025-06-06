@@ -331,8 +331,6 @@ async def event_enter(interaction: discord.Interaction, event_name: str, file: d
         
         # Submit the entry if valid
         if submit_entry(interaction.guild_id, event_name, interaction.user.id, submission_data):
-            print(f"User {interaction.user.id} submitted entry for event '{event_name}'")
-            print(f"Submission stats: {submission_data}")
             await interaction.followup.send(embed=embed, ephemeral=True)
         else:
             await interaction.followup.send("Failed to submit your entry. Please try again.", ephemeral=True)
