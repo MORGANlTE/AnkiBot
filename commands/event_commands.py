@@ -263,7 +263,23 @@ async def event_enter(interaction: discord.Interaction, event_name: str, file: d
             for p_id, pokemon_info in results['caught'].items():
                 name = pokemon_info['name']
                 nickname = f" ({pokemon_info['nickname']})" if pokemon_info['nickname'] else ""
-                caught_list.append(f"• #{p_id}: {name}{nickname} - Lvl {pokemon_info['level']} - Caught on {pokemon_info['capture_date']}")
+                
+                # Parse date more flexibly to handle different formats
+                try:
+                    # Try ISO format with T separator
+                    capture_date = datetime.datetime.fromisoformat(pokemon_info['capture_date'])
+                except (ValueError, TypeError):
+                    try:
+                        # Try standard format with space separator
+                        capture_date = datetime.datetime.strptime(pokemon_info['capture_date'], '%Y-%m-%d %H:%M:%S')
+                    except (ValueError, TypeError):
+                        # Fallback to just showing the raw date
+                        capture_date_str = str(pokemon_info['capture_date'])
+                        caught_list.append(f"• #{p_id}: {name}{nickname} - Lvl {pokemon_info['level']} - {capture_date_str}")
+                        continue
+                
+                # Format the date nicely
+                caught_list.append(f"• #{p_id}: {name}{nickname} - Lvl {pokemon_info['level']} - {capture_date.strftime('%d %B')}")
             
             embed.add_field(
                 name=f"Caught Pokémon ({len(results['caught'])})",

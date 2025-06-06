@@ -244,7 +244,7 @@ async def validate_catch_event_entry(entry_data: Any, pokemon_list: List[int]) -
             # Add to caught list
             caught_pokemon[pokemon_id] = {
                 'name': pokemon.get('name', f"Pokémon #{pokemon_id}"),
-                'capture_date': pokemon.get('capture_date', 'Unknown date'),
+                'capture_date': pokemon.get('captured_date', 'Unknown date'),
                 'level': pokemon.get('level', '?'),
                 'nickname': pokemon.get('nickname', '')
             }
