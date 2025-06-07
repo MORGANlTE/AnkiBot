@@ -53,7 +53,10 @@ def load_events():
     """Load events from the JSON file."""
     global active_events
     if not os.path.exists(EVENT_DATA_FILE):
-        return
+        # make sure the file exists
+        os.makedirs(os.path.dirname(EVENT_DATA_FILE), exist_ok=True)
+        with open(EVENT_DATA_FILE, 'w') as f:
+            json.dump({}, f)
         
     try:
         with open(EVENT_DATA_FILE, 'r') as f:

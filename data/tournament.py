@@ -21,7 +21,17 @@ def load_tournaments():
     """Load tournaments from the JSON file."""
     global active_tournaments
     if not os.path.exists(TOURNAMENT_DATA_FILE):
-        return
+        # make sure the file exists
+        os.makedirs(os.path.dirname(TOURNAMENT_DATA_FILE), exist_ok=True)
+        
+        print("No tournament data file found, starting with empty tournaments.")
+        active_tournaments = {}
+        # Initialize with empty tournaments
+        # This ensures that the file is created if it doesn't exist
+
+        with open(TOURNAMENT_DATA_FILE, 'w') as f:
+            json.dump({}, f, indent=2)
+        print("Created empty tournament data file.")
         
     try:
         with open(TOURNAMENT_DATA_FILE, 'r') as f:
