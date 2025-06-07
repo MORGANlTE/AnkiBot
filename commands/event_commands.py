@@ -475,10 +475,12 @@ def setup(tree: app_commands.CommandTree):
     config_event_subgroup = app_commands.Group(
         name="event",
         description="Admin commands for event configuration.",
+        default_permissions=admin_perms,
         parent=config_main_group
     )
 
     config_event_subgroup.add_command(event_create)
     config_event_subgroup.add_command(event_delete)
 
-    tree.add_command(config_main_group)
+    # tree.add_command(config_main_group)
+    # TODO fix this, permissions dont currently work
