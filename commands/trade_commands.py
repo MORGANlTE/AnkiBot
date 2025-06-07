@@ -441,5 +441,30 @@ async def complete_trade(interaction: discord.Interaction, trade_id: str):
     # Remove the trade from active trades
     del active_trades[trade_id]
 
+
+
+@app_commands.command(name="starttrade", description="Initiate a trade with another user.")
+@app_commands.allowed_installs(guilds=True, users=True)
+@app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
+@app_commands.describe(recipient="The user you want to trade with.")
+async def trade_initiate_command(interaction: discord.Interaction, recipient: discord.User):
+    initiator = interaction.user
+
+    if recipient.id == initiator.id:
+        await interaction.response.send_message("You can't initiate a trade with yourself!", ephemeral=True)
+        return
+    if recipient.bot:
+        await interaction.response.send_message("You can't trade with a bot!", ephemeral=True)
+        return
+
+    message_content = (
+        f"Hi {recipient.mention}, {initiator.mention} wants to trade with you!\n"
+        f"To respond and offer your Pokémon, please use the command: "
+        f"`/trade pokemon_code:[your-pokemon-code] user_id:{initiator.id}` in either a server where AnkiBot is installed or in a DM with AnkiBot.\n"
+    )
+    await interaction.response.send_message(message_content)
+
 def setup(tree: app_commands.CommandTree):
     tree.command(name="trade", description="Trade Pokémon with another user")(trade_command)
+    
+    tree.add_command(trade_initiate_command)
