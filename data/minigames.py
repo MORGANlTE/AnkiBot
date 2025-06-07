@@ -19,7 +19,6 @@ async def who_is_that_pokemon_visible(interaction: discord.Interaction, pokemon_
   async with aiohttp.ClientSession() as session:
           # Fetch the Pokemon data
           data = await fetch_data(session, f"{POKEAPI_BASE_URL}pokemon/{pokemon_id}")
-          print("Url:", f"{POKEAPI_BASE_URL}pokemon/{pokemon_id}")
           
           if data is None or data == "error":
               await interaction.followup.send("Sorry, an error occurred while fetching Pokémon data.")
@@ -64,7 +63,6 @@ async def who_is_that_pokemon(interaction: discord.Interaction, pokemon_id: int)
   async with aiohttp.ClientSession() as session:
           # Fetch the Pokemon data
           data = await fetch_data(session, f"{POKEAPI_BASE_URL}pokemon/{pokemon_id}")
-          print("Url:", f"{POKEAPI_BASE_URL}pokemon/{pokemon_id}")
           
           if data is None or data == "error":
               await interaction.followup.send("Sorry, an error occurred while fetching Pokémon data.")
