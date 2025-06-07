@@ -23,7 +23,7 @@ async def help_command(interaction):
     )
     embed.add_field(
         name="** **",
-        value=f"*v{os.getenv("VERSION")}*",
+        value=f"*v{os.getenv('VERSION')}*",
         inline=False,
     )
     embed.set_footer(
