@@ -3,160 +3,211 @@ import aiohttp
 from data.help_functions import fetch_data, POKEAPI_BASE_URL
 from PIL import Image
 import io
-import random  # Added import
+import random
 from data.game_state import active_pokemon_guesses
 import json
 import os
 from typing import Dict, List, Any, Optional
 
-# Path for minigame data file
-MINIGAME_DATA_FILE = os.path.join(os.path.dirname(__file__), 'minigame_data.json')
-
-# Default minigames if no file exists
-DEFAULT_MINIGAMES = [
-    {
-        "name": "Guess the Pokémon",
-        "description": "Try to guess the Pokémon from its silhouette!",
-        "type": "guess_pokemon"
-    },
-    {
-        "name": "Pokémon Trivia",
-        "description": "Answer trivia questions about Pokémon!",
-        "type": "pokemon_trivia"
-    }
-]
-
 # Store loaded minigames
 minigames = []
 
-def load_minigames():
-    """Load minigames from the JSON file."""
-    global minigames
-    
-    if not os.path.exists(MINIGAME_DATA_FILE):
-        # Create default file if it doesn't exist
-        minigames = DEFAULT_MINIGAMES
-        save_minigames()
-        return
-    
-    try:
-        with open(MINIGAME_DATA_FILE, 'r') as f:
-            minigames = json.load(f)
-        print(f"Loaded {len(minigames)} minigames")
-    except Exception as e:
-        print(f"Error loading minigames: {e}")
-        # Use defaults if there's an error
-        minigames = DEFAULT_MINIGAMES
-        save_minigames()
+async def who_is_that_pokemon_visible(interaction: discord.Interaction, pokemon_id: int):
+  """
+  Guesses the Pokémon by showing the full sprite instead of a pokémon.
+  """
+  async with aiohttp.ClientSession() as session:
+          # Fetch the Pokemon data
+          data = await fetch_data(session, f"{POKEAPI_BASE_URL}pokemon/{pokemon_id}")
+          print("Url:", f"{POKEAPI_BASE_URL}pokemon/{pokemon_id}")
+          
+          if data is None or data == "error":
+              await interaction.followup.send("Sorry, an error occurred while fetching Pokémon data.")
+              return
+          
+          name = data['name'].capitalize()
+          sprite_url = data['sprites']['front_default']
+          
+          if not sprite_url:
+              await interaction.followup.send("This Pokémon doesn't have a sprite available.")
+              return
+          
+          # Download the sprite image
+          async with session.get(sprite_url) as response:
+              if response.status != 200:
+                  await interaction.followup.send("I couldn't download the Pokémon sprite.")
+                  return
+              
+              image_data = await response.read()
+              
+          # Process the image - create a silhouette
+          file = discord.File(io.BytesIO(image_data), filename="who_is_that_pokemon.png")
 
-def save_minigames():
-    """Save minigames to a JSON file."""
-    try:
-        os.makedirs(os.path.dirname(MINIGAME_DATA_FILE), exist_ok=True)
-        with open(MINIGAME_DATA_FILE, 'w') as f:
-            json.dump(minigames, f, indent=2)
-    except Exception as e:
-        print(f"Error saving minigames: {e}")
+          embed = discord.Embed(
+              title="Who's that Pokémon?",
+              description="Guess the Pokémon in the chat!",
+              color=discord.Color.blue()
+          )
+          embed.set_image(url="attachment://who_is_that_pokemon.png")
+          
+          # Store the current Pokemon being guessed
+          active_pokemon_guesses[interaction.channel_id] = {
+              'pokemon_name': name.lower(),
+              'active': True,
+              'guesses': 0  # Initialize guess counter
+          }
+          
+          await interaction.followup.send(file=file, embed=embed)
 
-def get_minigame(minigame_type: str) -> Optional[Dict[str, Any]]:
-    """Get a minigame by type."""
-    return next((m for m in minigames if m["type"] == minigame_type), None)
+async def who_is_that_pokemon(interaction: discord.Interaction, pokemon_id: int):
+  """Starts the 'Who's that Pokémon?' minigame by showing a silhouette of a Pokémon. With hints!"""
+  async with aiohttp.ClientSession() as session:
+          # Fetch the Pokemon data
+          data = await fetch_data(session, f"{POKEAPI_BASE_URL}pokemon/{pokemon_id}")
+          print("Url:", f"{POKEAPI_BASE_URL}pokemon/{pokemon_id}")
+          
+          if data is None or data == "error":
+              await interaction.followup.send("Sorry, an error occurred while fetching Pokémon data.")
+              return
+          
+          name = data['name'].capitalize()
+          sprite_url = data['sprites']['front_default']
+          
+          if not sprite_url:
+              await interaction.followup.send("This Pokémon doesn't have a sprite available.")
+              return
+          
+          # Download the sprite image
+          async with session.get(sprite_url) as response:
+              if response.status != 200:
+                  await interaction.followup.send("I couldn't download the Pokémon sprite.")
+                  return
+              
+              image_data = await response.read()
+              
+          # Process the image - create a silhouette
+          img = Image.open(io.BytesIO(image_data))
+          
+          # Convert to RGB mode first to ensure compatibility
+          if img.mode != 'RGBA':
+              img = img.convert('RGBA')
+              
+          # Create a silhouette by converting to black
+          # Instead of using brightness which causes errors, we'll create a silhouette directly
+          width, height = img.size
+          silhouette = Image.new('RGBA', (width, height), color='black')
+          
+          # Create a mask from the original image's alpha channel if it exists
+          if 'A' in img.getbands():
+              mask = img.getchannel('A')
+              silhouette.putalpha(mask)
+          else:
+              # If no alpha channel, create a mask based on non-white pixels
+              # Convert to grayscale first
+              gray = img.convert('L')
+              # Create a binary mask where non-background pixels are white
+              threshold = 3  # Adjust if needed
+              mask = gray.point(lambda p: 255 if p > threshold else 0)
+              silhouette.putalpha(mask)
+          
+          # Save the processed image to a BytesIO object
+          img_byte_arr = io.BytesIO()
+          silhouette.save(img_byte_arr, format='PNG')
+          img_byte_arr.seek(0)  # Move to the beginning of BytesIO
+          
+          # Send the silhouette image and start the guessing game
+          file = discord.File(img_byte_arr, filename="who_is_that_pokemon.png")
+          embed = discord.Embed(
+              title="Who's that Pokémon?",
+              description="Guess the Pokémon in the chat!",
+              color=discord.Color.blue()
+          )
+          embed.set_image(url="attachment://who_is_that_pokemon.png")
 
-def add_minigame(name: str, description: str, minigame_type: str) -> bool:
-    """Add a new minigame."""
-    if any(m["type"] == minigame_type for m in minigames):
-        return False  # Minigame type already exists
-    
-    minigames.append({
-        "name": name,
-        "description": description,
-        "type": minigame_type
-    })
-    
-    save_minigames()
-    return True
+          embed.add_field(
+              name="Hint",
+              value="||"+"||, ||".join([t['type']['name'].capitalize() for t in data['types']]) + "||",
+              inline=False)
+          
+          # Store the current Pokemon being guessed
+          active_pokemon_guesses[interaction.channel_id] = {
+              'pokemon_name': name.lower(),
+              'active': True,
+              'guesses': 0  # Initialize guess counter
+          }
+          
+          await interaction.followup.send(file=file, embed=embed)
 
-def remove_minigame(minigame_type: str) -> bool:
-    """Remove a minigame by type."""
-    global minigames
-    original_length = len(minigames)
-    minigames = [m for m in minigames if m["type"] != minigame_type]
-    
-    if len(minigames) < original_length:
-        save_minigames()
-        return True
-    return False
-
-# Active minigame sessions
-active_pokemon_guesses = {}
-
-# Guess the Pokémon game
-async def play_pokemon_guess(interaction: discord.Interaction, pokemon_id: int):
-    """Play the Guess the Pokémon minigame."""
-    channel = interaction.channel
-    user = interaction.user
-    
-    # Setup game data
+async def unscramble_pokemon(interaction: discord.Interaction, pokemon_id: int):
+    """Play the Pokémon name unscrambling minigame."""
     async with aiohttp.ClientSession() as session:
-        async with session.get(f"https://pokeapi.co/api/v2/pokemon/{pokemon_id}") as response:
-            if response.status != 200:
-                await interaction.followup.send("Sorry, I couldn't fetch Pokémon data right now.")
-                return
-            data = await response.json()
+        # Fetch the Pokemon data
+        data = await fetch_data(session, f"{POKEAPI_BASE_URL}pokemon/{pokemon_id}")
         
-        pokemon_name = data['name'].lower()
-        sprite_url = data['sprites']['other']['official-artwork']['front_default']
-        
-        if not sprite_url:
-            sprite_url = data['sprites']['front_default']
-            
-        if not sprite_url:
-            await interaction.followup.send("Sorry, I couldn't find a sprite for this Pokémon.")
+        if data is None or data == "error":
+            await interaction.followup.send("Sorry, an error occurred while fetching Pokémon data.")
             return
         
-        # Store the game state
-        active_pokemon_guesses[channel.id] = {
-            'active': True,
-            'pokemon_name': pokemon_name,
-            'starter': user.id,
-            'guesses': 0
-        }
+        name = data['name'].capitalize()
         
-        # Create silhouette image
+        # Scramble the Pokémon name
+        name_list = list(name.lower())
+        random.shuffle(name_list)
+        scrambled_name = "".join(name_list)
+        
+        # Ensure scrambled name is different from original, reshuffle if not (for short names)
+        if len(name) > 1:  # Avoid infinite loop for single-letter names (though unlikely for Pokemon)
+            while scrambled_name == name.lower():
+                random.shuffle(name_list)
+                scrambled_name = "".join(name_list)
+        
         embed = discord.Embed(
-            title="Guess the Pokémon!",
-            description="Type your guess in the chat!",
+            title="Unscramble This Pokémon!",
+            description=f"The scrambled name is: \n**{scrambled_name}**\n\nType your guess in the chat!",
             color=discord.Color.blue()
         )
         
-        # Use the silhouette URL (you would need to process the image to make a silhouette)
-        embed.set_image(url=sprite_url)
+        # Take the image from the original Pokémon
+        sprite_url = data['sprites']['front_default']
+        file = None
         
-        await interaction.followup.send(embed=embed)
-
-# Pokémon Trivia game
-async def play_pokemon_trivia(interaction: discord.Interaction, pokemon_id: int):
-    """Play the Pokémon Trivia minigame."""
-    # Implementation for trivia game
-    await interaction.followup.send("Pokémon Trivia game will be implemented soon!")
+        # Transform the sprite image into very pixelated image
+        if sprite_url:
+            async with session.get(sprite_url) as response:
+                if response.status == 200:
+                    image_data = await response.read()
+                    img = Image.open(io.BytesIO(image_data))
+                    # Resize to create a pixelated effect
+                    img_byte_arr = io.BytesIO()
+                    image_tiny = img.resize((6, 6))    # resize it to a relatively tiny size
+                    # pixelization is resizing a smaller image into a larger one with some resampling
+                    pixelated = image_tiny.resize(img.size, Image.NEAREST)   # resizing the smaller image to the original size
+                    pixelated.save(img_byte_arr, format='PNG')  # Save with low quality to pixelate
+                    img_byte_arr.seek(0)
+                    file = discord.File(img_byte_arr, filename="unscrambled_pokemon.png")
+        
+        # Store the current Pokemon being guessed
+        active_pokemon_guesses[interaction.channel_id] = {
+            'pokemon_name': name.lower(),  # Store original lowercase name for checking
+            'active': True,
+            'guesses': 0  # Initialize guess counter
+        }
+        
+        if file:
+            embed.set_image(url="attachment://unscrambled_pokemon.png")
+            await interaction.followup.send(file=file, embed=embed)
+        else:
+            await interaction.followup.send(embed=embed)
 
 # Play a random minigame
 async def play_random_minigame(interaction: discord.Interaction, pokemon_id: int):
     """Play a random minigame."""
-    # Ensure minigames are loaded
-    if not minigames:
-        load_minigames()
-    
-    # Select a random minigame
-    selected_minigame = random.choice(minigames)
-    
-    # Play the selected minigame
-    if selected_minigame["type"] == "guess_pokemon":
-        await play_pokemon_guess(interaction, pokemon_id)
-    elif selected_minigame["type"] == "pokemon_trivia":
-        await play_pokemon_trivia(interaction, pokemon_id)
+    # Select a random minigame from the loaded minigames list
+    if minigames:
+        chosen_game = random.choice(minigames)
+        await chosen_game['function'](interaction, pokemon_id)
     else:
-        await interaction.followup.send(f"Unknown minigame type: {selected_minigame['type']}")
+        await interaction.followup.send("No minigames are currently available.")
 
 async def evaluate_guess(guess: str, pokemon_name: str, channel, user):
     """Evaluate a user's guess in the Pokémon guessing game."""
@@ -182,6 +233,33 @@ async def evaluate_guess(guess: str, pokemon_name: str, channel, user):
                 # Simple hint: first letter
                 hint = f"Hint: The Pokémon's name starts with '{pokemon_name[0].upper()}'."
                 await channel.send(hint)
+
+def load_minigames():
+    """Load available minigames into the global minigames list."""
+    global minigames
+    
+    minigames = [
+        {
+            "type": "guess_pokemon",
+            "name": "Who's that Pokémon?",
+            "description": "Guess the Pokémon based on a silhouette.",
+            "function": who_is_that_pokemon
+        },
+        {
+            "type": "unscramble_pokemon",
+            "name": "Unscramble the Pokémon",
+            "description": "Unscramble the letters to guess the Pokémon name.",
+            "function": unscramble_pokemon
+        },
+        {
+            "type": "guess_pokemon_visible",
+            "name": "Who's that Pokémon? (Visible)",
+            "description": "Guess the Pokémon by seeing its full sprite.",
+            "function": who_is_that_pokemon_visible
+        }
+    ]
+    
+    print(f"Loaded {len(minigames)} minigames")
 
 # Load minigames when module is imported
 load_minigames()

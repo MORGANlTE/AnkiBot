@@ -10,7 +10,7 @@ from data.minigames import active_pokemon_guesses, evaluate_guess
 load_dotenv()
 
 # Variables:
-version = "0.3"
+version = "0.4"
 sync_commands = True # Set to False to disable command syncing
 intents = discord.Intents.default()
 intents.messages = True
