@@ -1,7 +1,6 @@
 from discord import app_commands
 from discord.app_commands import default_permissions
 from discord import app_commands
-import discord
 
 
 @app_commands.command(name="ping", description="Check the bot's latency")

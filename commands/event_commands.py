@@ -456,19 +456,40 @@ async def event_delete(interaction: discord.Interaction, event_name: str):
 def setup(tree: app_commands.CommandTree):
     admin_perms = discord.Permissions(administrator=True)
 
-    event_group = app_commands.Group(name="event", description="Commands for managing events.")
-    event_group.add_command(event_list)
-    event_group.add_command(event_info)
-    event_group.add_command(event_enter)
-    event_group.add_command(event_leaderboard)
-    event_group_admin = app_commands.Group(
-        name="adminevent", 
-        description="Admin commands for managing events.",
-        default_permissions=admin_perms
-    )
-    
-    event_group_admin.add_command(event_create)
-    event_group_admin.add_command(event_delete)
+    # Group for regular event commands: /event list, /event info, etc.
+    # This remains as you had it for non-admin commands.
+    regular_event_group = app_commands.Group(name="event", description="Commands for managing events.")
+    # Add your existing non-admin event commands to this group
+    # These functions (event_list, event_info, etc.) should be Command objects
+    # (i.e., decorated with @app_commands.command)
+    regular_event_group.add_command(event_list)
+    regular_event_group.add_command(event_info)
+    regular_event_group.add_command(event_enter)
+    regular_event_group.add_command(event_leaderboard)
+    tree.add_command(regular_event_group) # Registers /event ...
 
-    tree.add_command(event_group)
-    tree.add_command(event_group_admin)
+    # Top-level 'config' group for admin commands
+    config_main_group = app_commands.Group(
+        name="config",
+        description="Configuration commands.", # General description for /config
+        default_permissions=admin_perms, # UI hint for all /config commands
+        guild_only=True # Configuration commands are typically guild-specific
+    )
+
+    # 'event' subgroup under 'config': /config event ...
+    config_event_subgroup = app_commands.Group(
+        name="event",
+        description="Admin commands for event configuration.", # Description for /config event
+        parent=config_main_group # This nests 'event' under 'config'
+        # default_member_permissions is inherited from config_main_group
+    )
+
+    # Add create and delete commands to the 'config event' subgroup.
+    # event_create and event_delete are Command objects due to their decorators.
+    # Their names ("create", "delete") and descriptions will be taken from their decorators.
+    # Their @checks.has_permissions decorator will provide the runtime permission check.
+    config_event_subgroup.add_command(event_create) # Results in /config event create
+    config_event_subgroup.add_command(event_delete) # Results in /config event delete
+
+    # Add the top-level 'config' group (which now includes its 'event' subgroup) to the tree.
+    tree.add_command(config_main_group)

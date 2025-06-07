@@ -11,7 +11,7 @@ load_dotenv()
 
 # Variables:
 version = "0.3"
-sync_commands = True # Set to False to disable command syncing
+sync_commands = False # Set to False to disable command syncing
 intents = discord.Intents.default()
 intents.messages = True
 intents.message_content = True  # Need this to read message content
