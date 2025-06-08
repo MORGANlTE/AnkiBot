@@ -11,7 +11,7 @@ from data.events import (
     generate_pokemon_image, event_name_autocomplete, get_pokemon_names,
     set_badge_reward, end_event
 )
-from data.profiles import award_badges_to_users
+from data.profiles import award_badges_to_users, get_all_badges
 from data.badges import get_badge_id
 
 
@@ -19,6 +19,17 @@ from data.badges import get_badge_id
 EVENT_TYPE_CHOICES = [
     app_commands.Choice(name="Catch Event", value="catch")
 ]
+
+# Badge autocomplete function
+async def badge_name_autocomplete(interaction: discord.Interaction, current: str):
+    """Autocomplete function for badge names."""
+    badges = get_all_badges()
+    
+    return [
+        discord.app_commands.Choice(name=badge["name"], value=badge["name"])
+        for badge in badges 
+        if current.lower() in badge["name"].lower()
+    ][:25]  # Discord limits to 25 choices
 
 @app_commands.allowed_installs(guilds=True, users=False)
 @app_commands.allowed_contexts(guilds=True, dms=False, private_channels=False)
@@ -33,6 +44,7 @@ EVENT_TYPE_CHOICES = [
     required_completion="Percentage of completion required to earn the badge (1-100)"
 )
 @app_commands.choices(event_type=EVENT_TYPE_CHOICES)
+@app_commands.autocomplete(badge_reward=badge_name_autocomplete)
 async def event_create(
     interaction: discord.Interaction, 
     name: str, 
@@ -542,7 +554,7 @@ async def event_end(interaction: discord.Interaction, event_name: str):
             
             embed.add_field(
                 name=f"Badge Recipients ({len(qualified_users)})",
-                value="\n".join(badge_recipients) if badge_recipients else "None",
+                value="\n".join(badge_recipients) if badge_recipients and len(badge_recipients) < 20 else "Too many recipients to display.",
                 inline=False
             )
         else:

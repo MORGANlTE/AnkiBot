@@ -85,7 +85,7 @@ async def profile_command(interaction: discord.Interaction, user: Optional[disco
             # Find the badge details
             for badge in badges:
                 if badge["name"] == badge_name:
-                    badge_id = get_badge_id(badge_name)
+                    badge_id = badge["emoji_id"]
                     badge_details.append(f"<:{badge_name}:{badge_id}> • {badge.get('acquired_from', 'Unknown')}")
                     break
         
