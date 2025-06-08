@@ -2,10 +2,11 @@ import sqlite3
 import os
 import datetime
 from typing import List, Dict, Any, Optional, Tuple, Union
+from dotenv import load_dotenv
 
 # Database file path
 DB_FILE = os.path.join(os.path.dirname(__file__), 'ankibot.db')
-
+load_dotenv()
 class DatabaseManager:
     """Manages database connections and operations"""
     
