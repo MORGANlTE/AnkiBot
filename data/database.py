@@ -124,8 +124,13 @@ class DatabaseManager:
         count = cursor.fetchone()[0]
         
         if count == 0:
-            # Initialize with predefined badges
-            if os.getenv("ENVIRONMENT") == "production":
+            # Get environment and print for debugging
+            env = os.getenv("ENVIRONMENT")
+            print(f"Initializing badges with environment: '{env}'")
+            
+            # Select the appropriate dictionary based on environment
+            if env == "production":
+                print("Using production badge IDs")
                 badges_dict = {
                     "clefabadge_locked": 1380968213822570497,
                     "eeveebadge_locked": 1380968204310151238,
@@ -154,6 +159,7 @@ class DatabaseManager:
                     "eeveebadge": 1380912132589097060
                 }
             else:
+                print("Using test badge IDs")
                 badges_dict = {
                     "stonebadge": 1381352055209463939,
                     "waterbadge": 1381352045889589410,
@@ -182,33 +188,41 @@ class DatabaseManager:
                     "flamebadge_locked": 1381351712249348096
                 }
             
-            # Process the dictionaries to create badge records for insertion
+            # Process the dictionary to create badge records for insertion
             badges_data = []
             
-            # First, collect all the base badge names (without _locked)
+            # First, identify all base badge names (without _locked suffix)
             base_badges = set()
             for badge_name in badges_dict.keys():
                 if not badge_name.endswith('_locked'):
                     base_badges.add(badge_name)
                 else:
                     # Add the base version of locked badges
-                    base_badges.add(badge_name[:-7])
+                    base_name = badge_name[:-7]  # Remove '_locked' suffix
+                    base_badges.add(base_name)
             
-            # For each base badge, create a database record with its emoji_id and locked_emoji_id
+            print(f"Found {len(base_badges)} unique badge types to initialize")
+            
+            # For each base badge, create a record with both normal and locked emoji IDs
             for badge_name in base_badges:
+                # Get the emoji IDs from the dictionary
                 emoji_id = badges_dict.get(badge_name, -1)
                 locked_emoji_id = badges_dict.get(f"{badge_name}_locked", -1)
+                
+                # Create description
                 description = f"The {badge_name.capitalize()} badge"
                 
+                # Add to the data list for batch insertion
                 badges_data.append((badge_name, emoji_id, locked_emoji_id, description))
             
+            # Insert all badges at once
             cursor.executemany(
                 "INSERT INTO badges (name, emoji_id, locked_emoji_id, description) VALUES (?, ?, ?, ?)",
                 badges_data
             )
             
             conn.commit()
-            print("Initialized badge definitions")
+            print(f"Successfully initialized {len(badges_data)} badge definitions")
     
     def execute(self, query, params=None):
         """Execute a query with optional parameters"""
