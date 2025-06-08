@@ -17,6 +17,8 @@ EVENT_TYPE_CHOICES = [
     app_commands.Choice(name="Catch Event", value="catch")
 ]
 
+@app_commands.allowed_installs(guilds=True, users=False)
+@app_commands.allowed_contexts(guilds=True, dms=False, private_channels=False)
 @app_commands.command(name="create", description="Create a new event (Admin only)")
 @app_commands.describe(
     name="Name of the event",
@@ -435,7 +437,8 @@ async def event_leaderboard(interaction: discord.Interaction, event_name: str):
     await interaction.followup.send(embed=embed)
 
 
-
+@app_commands.allowed_installs(guilds=True, users=False)
+@app_commands.allowed_contexts(guilds=True, dms=False, private_channels=False)
 @app_commands.command(name="delete", description="Delete an existing event (Admin only)")
 @app_commands.describe(
     event_name="The event to delete"
@@ -468,7 +471,6 @@ def setup(tree: app_commands.CommandTree):
         name="config",
         description="Configuration commands.",
         default_permissions=admin_perms,
-        guild_only=True
     )
 
     # group for admin commands, which will be nested under /config
@@ -482,5 +484,5 @@ def setup(tree: app_commands.CommandTree):
     config_event_subgroup.add_command(event_create)
     config_event_subgroup.add_command(event_delete)
 
-    # tree.add_command(config_main_group)
+    tree.add_command(config_main_group)
     # TODO fix this, permissions dont currently work
