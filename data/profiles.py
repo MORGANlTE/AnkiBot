@@ -1,7 +1,6 @@
 import datetime
 from typing import Dict, List, Any, Optional
 from data.database import db
-print("test")
 
 def get_user_profile(user_id: int) -> Dict[str, Any]:
     """Get a user's profile, creating it if it doesn't exist."""
