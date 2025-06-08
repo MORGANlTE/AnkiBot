@@ -485,4 +485,3 @@ def setup(tree: app_commands.CommandTree):
     config_event_subgroup.add_command(event_delete)
 
     tree.add_command(config_main_group)
-    # TODO fix this, permissions dont currently work
