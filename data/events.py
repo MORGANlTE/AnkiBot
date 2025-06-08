@@ -24,6 +24,8 @@ class EventData:
         self.creator_id = creator_id
         self.pokemon_list = []  # List of Pokémon IDs to catch
         self.participants = {}  # Dictionary of user_id -> {submitted: bool, data: Any}
+        self.badge_reward = None  # Badge name to award
+        self.required_completion = 100  # Percentage required to earn badge (default 100%)
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -33,7 +35,9 @@ class EventData:
             'end_date': self.end_date,
             'creator_id': self.creator_id,
             'pokemon_list': self.pokemon_list,
-            'participants': self.participants
+            'participants': self.participants,
+            'badge_reward': self.badge_reward,
+            'required_completion': self.required_completion
         }
 
     @classmethod
@@ -47,6 +51,8 @@ class EventData:
         )
         event.pokemon_list = data['pokemon_list']
         event.participants = data['participants']
+        event.badge_reward = data.get('badge_reward')
+        event.required_completion = data.get('required_completion', 100)
         return event
 
 def load_events():
@@ -375,6 +381,60 @@ async def get_pokemon_names(pokemon_ids: List[int]) -> Dict[int, str]:
             except Exception:
                 names[pokemon_id] = f"Pokémon #{pokemon_id}"
     return names
+
+def set_badge_reward(guild_id: int, event_name: str, badge_name: str, required_completion: int) -> bool:
+    """Set the badge reward for an event."""
+    event = get_event(guild_id, event_name)
+    if not event:
+        return False
+    
+    # Validate completion percentage
+    if required_completion < 1 or required_completion > 100:
+        return False
+    
+    event.badge_reward = badge_name
+    event.required_completion = required_completion
+    save_events()
+    return True
+
+def end_event(guild_id: int, event_name: str) -> Tuple[bool, Dict[str, Any]]:
+    """End an event and calculate rewards.
+    
+    Returns:
+        Tuple[bool, Dict[str, Any]]: (success, results)
+    """
+    event = get_event(guild_id, event_name)
+    if not event:
+        return False, {"error": "Event not found"}
+    
+    # Process results
+    results = {
+        "name": event.name,
+        "qualified_users": [],
+        "badge_awarded": event.badge_reward,
+        "required_completion": event.required_completion
+    }
+    
+    if event.badge_reward:
+        qualified_users = []
+        
+        for user_id, participant_data in event.participants.items():
+            if participant_data.get("submitted", False):
+                # Get completion percentage
+                submission_data = participant_data.get("data", {})
+                completion = submission_data.get("completion_percentage", 0)
+                
+                # Check if user qualifies for the badge
+                if completion >= event.required_completion:
+                    qualified_users.append(int(user_id))
+        
+        results["qualified_users"] = qualified_users
+    
+    # Delete the event
+    if delete_event(guild_id, event_name):
+        return True, results
+    else:
+        return False, {"error": "Failed to delete event"}
 
 # Load events when module is imported
 load_events()

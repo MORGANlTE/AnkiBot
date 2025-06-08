@@ -17,8 +17,28 @@ async def help_command(interaction):
         inline=False,
     )
     embed.add_field(
-        name=":thinking: This is still a work in progress",
-        value=":)",
+        name="/profile",
+        value="View your profile with earned badges",
+        inline=True,
+    )
+    embed.add_field(
+        name="/event list",
+        value="List active events with badge rewards",
+        inline=True,
+    )
+    embed.add_field(
+        name="/event info [event]",
+        value="View event details and requirements",
+        inline=True,
+    )
+    embed.add_field(
+        name="/event enter [event]",
+        value="Submit your entry for an event to earn badges",
+        inline=True,
+    )
+    embed.add_field(
+        name="/pokemon info [name]",
+        value="Get detailed info about a Pokémon",
         inline=True,
     )
     embed.add_field(

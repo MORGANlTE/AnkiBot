@@ -169,3 +169,4 @@ cython_debug/
 tournament_data.json
 event_data.json
 minigame_data.json
+profile_data.json
