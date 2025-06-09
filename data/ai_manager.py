@@ -1,0 +1,172 @@
+import os
+import asyncio
+import google.generativeai as genai
+from dotenv import load_dotenv
+from typing import Optional, List
+import re
+
+# Load environment variables
+load_dotenv()
+
+# Get API key
+GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
+
+# Default models
+DEFAULT_MODELS = ["gemini-1.5-pro", "gemini-1.5-flash", "gemini-1.0-pro"]
+PREFERRED_MODEL = "gemini-1.5-flash"  # Default preferred model
+
+# Global variables to store the initialized model and state
+_model_initialized = False
+_model_instance = None
+_selected_model_name = None
+
+def configure_api():
+    """Configure the Google Generative AI API"""
+    if not GEMINI_API_KEY:
+        print("Warning: GEMINI_API_KEY not found in .env file")
+        return False
+    
+    try:
+        genai.configure(api_key=GEMINI_API_KEY)
+        return True
+    except Exception as e:
+        print(f"Error configuring Gemini API: {str(e)}")
+        return False
+
+def get_available_models():
+    """Fetch available models from Google Generative AI API"""
+    try:
+        # Configure the API if not already
+        configure_api()
+        
+        # Get available models
+        models = []
+        for model in genai.list_models():
+            # Only include generative models (those that support generateContent)
+            if "generateContent" in model.supported_generation_methods:
+                models.append(model.name)
+        
+        print(f"Found {len(models)} available models")
+        return models
+    except Exception as e:
+        print(f"Error fetching models: {str(e)}")
+        # Return default models if we can't fetch the list
+        return DEFAULT_MODELS
+
+def select_best_model(models: List[str]) -> str:
+    """Select the best model, preferring ones with 2.5 in the name"""
+    # First, look for models with 2.5 in the name
+    models_2_5 = [model for model in models if "2.5" in model]
+    if models_2_5:
+        print(f"Found {len(models_2_5)} models with version 2.5")
+        # Prefer flash models for speed if available
+        for model in models_2_5:
+            if "flash" in model.lower():
+                print(f"Selected 2.5 flash model: {model}")
+                return model
+        # Otherwise return the first 2.5 model
+        print(f"Selected 2.5 model: {models_2_5[0]}")
+        return models_2_5[0]
+    
+    # If no 2.5 models, fall back to default preference order
+    for model_type in ["gemini-1.5-flash", "gemini-1.5-pro", "gemini-1.0-pro"]:
+        for model in models:
+            if model_type in model:
+                print(f"Selected fallback model: {model}")
+                return model
+    
+    # If nothing matches our preferences, return the first model or a default
+    return models[0] if models else "gemini-1.5-flash"
+
+def initialize_model():
+    """Initialize the Gemini model (should be called only once)"""
+    global _model_initialized, _model_instance, _selected_model_name
+    
+    if _model_initialized:
+        return True
+    
+    if not configure_api():
+        return False
+    
+    try:
+        # Get available models
+        models = get_available_models()
+        
+        # Select the best model
+        _selected_model_name = select_best_model(models)
+        print(f"Initializing AI with model: {_selected_model_name}")
+        
+        # Initialize Gemini model
+        _model_instance = genai.GenerativeModel(_selected_model_name)
+        
+        _model_initialized = True
+        return True
+    except Exception as e:
+        print(f"Error initializing model: {str(e)}")
+        return False
+
+def _generate_description_sync(pokemon_name: str, pokemon_types: list,
+                          pokemon_abilities: list, pokemon_id: int) -> Optional[str]:
+    """Synchronous function to generate a Pokemon description - runs in a thread"""
+    global _model_initialized, _model_instance, _selected_model_name
+    
+    if not _model_initialized:
+        success = initialize_model()
+        if not success:
+            return None
+    
+    try:
+        # Create the prompt
+        prompt = f"""Create an interesting description of the Pokémon {pokemon_name} (Pokédex number {pokemon_id}).
+        
+        This Pokémon is of type(s): {', '.join(pokemon_types)}.
+        It has the following abilities: {', '.join(pokemon_abilities)}.
+        
+        Write 2-3 sentences describing this Pokémon in a creative and engaging way, but without directly 
+        mentioning its name, type, or abilities explicitly, as this will be used in a guessing game.
+        
+        Don't use obvious clues like "this fire type" or "this water dwelling creature", but instead describe 
+        its characteristics, habitat, or behavior indirectly.
+        
+        Keep your description mysterious but fair, so players can guess without being completely obvious. Make it very short, but write it in a nice poetic way.
+        Don't respond with "This Pokémon is a..." or similar phrases, just start describing it directly.
+        Avoid using the Pokémon's name in the description.
+        You can mention it's type like 'it is in heat for x' to describe it's type. Give a huge hint about how it looks.
+        """
+        
+        # Generate the description using the pre-initialized model
+        response = _model_instance.generate_content(prompt)
+        description = response.text
+        
+        # Clean up any potential references to the name
+        description = description.replace(pokemon_name, "This Pokémon")
+        
+        return description
+    except Exception as e:
+        print(f"Error generating Pokémon description: {str(e)}")
+        # If there's an error with the model, reset the initialization flag
+        # so we can try to initialize again on the next call
+        _model_initialized = False
+        return None
+
+async def generate_pokemon_description(pokemon_name: str, pokemon_types: list,
+                               pokemon_abilities: list, pokemon_id: int) -> Optional[str]:
+    """Generate a creative description for a Pokémon using Google Generative AI
+       This runs the API call in a background thread to avoid blocking the main thread"""
+    try:
+        # Run the synchronous function in a thread pool to avoid blocking
+        description = await asyncio.to_thread(
+            _generate_description_sync,
+            pokemon_name,
+            pokemon_types,
+            pokemon_abilities,
+            pokemon_id
+        )
+        return description
+    except Exception as e:
+        print(f"Error in async wrapper for Pokémon description: {str(e)}")
+        return None
+
+# Initialize the model when the module is imported
+print("Initializing AI manager...")
+initialize_model()

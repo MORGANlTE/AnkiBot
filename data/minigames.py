@@ -8,6 +8,7 @@ from data.game_state import active_pokemon_guesses
 import json
 import os
 from typing import Dict, List, Any, Optional
+from data.ai_manager import generate_pokemon_description
 
 # Store loaded minigames
 minigames = []
@@ -57,6 +58,59 @@ async def who_is_that_pokemon_visible(interaction: discord.Interaction, pokemon_
           }
           
           await interaction.followup.send(file=file, embed=embed)
+
+async def guess_by_description(interaction: discord.Interaction, pokemon_id: int):
+    """Guess the Pokémon based on an AI-generated description."""
+    async with aiohttp.ClientSession() as session:
+        # Fetch the Pokemon data
+        data = await fetch_data(session, f"{POKEAPI_BASE_URL}pokemon/{pokemon_id}")
+        
+        if data is None or data == "error":
+            await interaction.followup.send("Sorry, an error occurred while fetching Pokémon data.")
+            return
+        
+        name = data['name'].capitalize()
+        
+        # Get Pokémon types and abilities for the AI description
+        types = [t['type']['name'].capitalize() for t in data['types']]
+        abilities = [a['ability']['name'].replace('-', ' ').capitalize() for a in data['abilities']]
+        
+        # Tell the user we're generating a description
+        await interaction.followup.send("Generating a Pokémon description...", ephemeral=True)
+        
+        # Try to get an AI-generated description - this now runs in a background thread
+        ai_description = await generate_pokemon_description(name, types, abilities, pokemon_id)
+        
+        if ai_description:
+            # Use the AI-generated description
+            description = ai_description
+            title = "Guess the Pokémon from AI Description!"
+        else:
+            # Fallback to the simple description if AI fails
+            description = f"This Pokémon is of type(s): {', '.join(types)}.\n"
+            description += f"It has the following abilities: {', '.join(abilities)}."
+            title = "Guess the Pokémon by Description!"
+        
+        # as the footer, we set the pokemon name but replace 70% of the name with _
+        
+        
+        embed = discord.Embed(
+            title=title,
+            description=description,
+            color=discord.Color.blue()
+        )
+        hidden_name = name[0] + ''.join(['_' if random.random() < 0.7 else c for c in name[1:]])
+        embed.set_footer(text=f"Hint: The Pokémon is {hidden_name}.")
+
+        # Store the current Pokemon being guessed
+        active_pokemon_guesses[interaction.channel_id] = {
+            'pokemon_name': name.lower(),  # Store original lowercase name for checking
+            'active': True,
+            'guesses': 0  # Initialize guess counter
+        }
+        
+        # Send the actual challenge to the channel (not ephemeral)
+        await interaction.channel.send(embed=embed)
 
 async def who_is_that_pokemon(interaction: discord.Interaction, pokemon_id: int):
   """Starts the 'Who's that Pokémon?' minigame by showing a silhouette of a Pokémon. With hints!"""
@@ -227,9 +281,17 @@ async def evaluate_guess(guess: str, pokemon_name: str, channel, user):
             active_pokemon_guesses[channel.id]['guesses'] += 1
             
             # After a certain number of guesses, provide a hint
-            if active_pokemon_guesses[channel.id]['guesses'] % 5 == 0:
+            if active_pokemon_guesses[channel.id]['guesses'] % 3 == 0 and active_pokemon_guesses[channel.id]['guesses'] < 5:
                 # Simple hint: first letter
                 hint = f"Hint: The Pokémon's name starts with '{pokemon_name[0].upper()}'."
+                await channel.send(hint)
+            if active_pokemon_guesses[channel.id]['guesses'] % 5 == 0 and active_pokemon_guesses[channel.id]['guesses'] < 6:
+                # More complex hint: type(s)
+                hint = f"Hint: The Pokémon's name starts with '{pokemon_name[0:2].upper()}'"
+                await channel.send(hint)
+            if active_pokemon_guesses[channel.id]['guesses'] >= 6 and active_pokemon_guesses[channel.id]['guesses'] < 7:
+                # Final hint: full name
+                hint = f"Final Hint: The Pokémon's name is **{pokemon_name[0:3].capitalize()}**."
                 await channel.send(hint)
 
 def load_minigames():
@@ -254,6 +316,12 @@ def load_minigames():
             "name": "Who's that Pokémon? (Visible)",
             "description": "Guess the Pokémon by seeing its full sprite.",
             "function": who_is_that_pokemon_visible
+        },
+        {
+            "type": "guess_by_description",
+            "name": "Guess by this description Minigame",
+            "description": "Guess the Pokémon based on a description.",
+            "function": guess_by_description
         }
     ]
     
