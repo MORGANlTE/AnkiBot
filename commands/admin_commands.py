@@ -395,8 +395,8 @@ def setup(tree: app_commands.CommandTree):
     config_event_subgroup.add_command(event_end)
     
     # Add guild-specific commands (only in ADMIN_GUILD_ID)
-    tree.add_command(badge_add_command, guild=ADMIN_GUILD_ID)
-    tree.add_command(badge_list_command, guild=ADMIN_GUILD_ID)
+    tree.add_command(badge_add_command)
+    tree.add_command(badge_list_command)
     
     # Add the config main group to the tree
-    tree.add_command(config_main_group, guild=ADMIN_GUILD_ID)
+    tree.add_command(config_main_group)
