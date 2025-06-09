@@ -11,9 +11,10 @@ from data.events import (
     create_event, delete_event, get_event, event_name_autocomplete, 
     set_pokemon_list, set_badge_reward, end_event
 )
+import os
 
 # Guild ID where badge admin commands will be available
-ADMIN_GUILD_ID = discord.Object(id=945414516391424040)
+ADMIN_GUILD_ID = [discord.Object(id=945414516391424040), discord.Object(id=1241773562629718148)] if os.getenv("ENV") == "production" else [discord.Object(id=945414516391424040)]
 
 # Event type choices
 EVENT_TYPE_CHOICES = [
@@ -395,8 +396,8 @@ def setup(tree: app_commands.CommandTree):
     config_event_subgroup.add_command(event_end)
     
     # Add guild-specific commands (only in ADMIN_GUILD_ID)
-    tree.add_command(badge_add_command)
-    tree.add_command(badge_list_command)
+    tree.add_command(badge_add_command, guilds=ADMIN_GUILD_ID)
+    tree.add_command(badge_list_command, guilds=ADMIN_GUILD_ID)
     
     # Add the config main group to the tree
-    tree.add_command(config_main_group)
+    tree.add_command(config_main_group, guilds=ADMIN_GUILD_ID)
