@@ -14,7 +14,7 @@ from data.events import (
 import os
 
 # Guild ID where badge admin commands will be available
-ADMIN_GUILD_ID = [discord.Object(id=945414516391424040), discord.Object(id=1241773562629718148)] if os.getenv("ENV") == "production" else [discord.Object(id=945414516391424040)]
+ADMIN_GUILD_ID = [discord.Object(id=945414516391424040), discord.Object(id=1241773562629718148), discord.Object(id=1184152399502397513)] if os.getenv("ENV") == "production" else [discord.Object(id=945414516391424040)]
 
 # Event type choices
 EVENT_TYPE_CHOICES = [
