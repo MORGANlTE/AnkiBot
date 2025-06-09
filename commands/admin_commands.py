@@ -399,4 +399,4 @@ def setup(tree: app_commands.CommandTree):
     tree.add_command(badge_list_command, guild=ADMIN_GUILD_ID)
     
     # Add the config main group to the tree
-    tree.add_command(config_main_group)
+    tree.add_command(config_main_group, guild=ADMIN_GUILD_ID)
