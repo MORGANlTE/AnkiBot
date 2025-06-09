@@ -13,9 +13,6 @@ from data.events import (
 )
 import os
 
-# Guild ID where badge admin commands will be available
-ADMIN_GUILD_ID = os.getenv("ADMIN_GUILD_IDS").split(",")
-
 # Event type choices
 EVENT_TYPE_CHOICES = [
     app_commands.Choice(name="Catch Event", value="catch")
@@ -396,7 +393,8 @@ def setup(tree: app_commands.CommandTree):
     config_event_subgroup.add_command(event_end)
     
     # Add guild-specific commands (only in ADMIN_GUILD_ID)
-    ADMIN_GUILD_IDS = [discord.Object(id=int(guild_id)) for guild_id in os.getenv("ADMIN_GUILD_IDS", "").split(",") if guild_id.isdigit()]
+    ADMIN_GUILD_IDS = [discord.Object(id=guild_id) for guild_id in os.getenv("ADMIN_GUILD_IDS", "").split(", ")]
+    print(f"Admin guild IDs: {ADMIN_GUILD_IDS}")
     tree.add_command(badge_add_command, guilds=ADMIN_GUILD_IDS)
     tree.add_command(badge_list_command, guilds=ADMIN_GUILD_IDS)
     
