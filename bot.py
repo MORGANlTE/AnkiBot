@@ -49,10 +49,6 @@ async def on_ready():
         has_synced = True
         print("Currently supporting {} guilds".format(len(client.guilds)))
 
-    for guild in client.guilds:
-        for emoji in guild.emojis:
-            print(f"<:{emoji.name}:{emoji.id}>")
-        
 @client.event
 async def on_message(message):
     # Ignore messages from the bot itself
