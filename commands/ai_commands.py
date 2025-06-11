@@ -77,7 +77,7 @@ async def ai_reset(interaction: discord.Interaction):
     else:
         await interaction.followup.send("Failed to reset AI conversation history.", ephemeral=True)
 
-async def handle_ai_message(message):
+async def handle_ai_message(author, message):
     """Handle AI interactions in designated chat channels"""
     # Ignore messages from bots
     if message.author.bot:
@@ -87,7 +87,7 @@ async def handle_ai_message(message):
     try:
         # Send typing indicator while waiting for response
         async with message.channel.typing():
-            response = await ask_question(message.content)
+            response = await ask_question(author, message.content)
             
             # Split response if it exceeds Discord's message limit
             if len(response) <= DISCORD_MESSAGE_LIMIT:

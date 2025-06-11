@@ -185,18 +185,22 @@ async def generate_pokemon_description(pokemon_name: str, pokemon_types: list,
         print(f"Error in async wrapper for Pokémon description: {str(e)}")
         return None
 
-def _ask_question_sync(question: str) -> Optional[str]:
+def _ask_question_sync(author: str, question: str) -> Optional[str]:
     """Synchronous function to ask a question to the AI - runs in a thread"""
     global _model_initialized, chat_session
     
     if not _model_initialized:
+        # Assuming initialize_model() sets up the chat_session
         success = initialize_model()
         if not success:
             return "I'm sorry, but I couldn't initialize my AI capabilities at the moment."
     
     try:
-        # Send the question to the chat session
-        response = chat_session.send_message(question)
+        # Construct a clear prompt for the model
+        user_prompt = f"User '{author}' asks: {question}"
+        
+        response = chat_session.send_message(user_prompt)
+        
         return response.text
     except Exception as e:
         print(f"Error asking question to AI: {str(e)}")
@@ -204,13 +208,14 @@ def _ask_question_sync(question: str) -> Optional[str]:
         _model_initialized = False
         return f"I encountered an error while processing your question: {str(e)}"
 
-async def ask_question(question: str) -> str:
+async def ask_question(author: str, question: str) -> str:
     """Ask a question to the AI and get a response
        This runs the API call in a background thread to avoid blocking the main thread"""
     try:
         # Run the synchronous function in a thread pool to avoid blocking
         response = await asyncio.to_thread(
             _ask_question_sync,
+            author,
             question
         )
         return response

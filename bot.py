@@ -68,6 +68,9 @@ async def on_message(message):
         
         # If the message is in a designated AI channel, process it with the AI
         if channel_id in ai_channel_ids:
-            await ai_commands.handle_ai_message(message)
+            author = message.author
+            nickname = author.display_name
+
+            await ai_commands.handle_ai_message(str(nickname + " user full name: " + str(author)), message)
 
 client.run(os.getenv("TOKEN"))
