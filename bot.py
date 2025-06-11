@@ -3,7 +3,7 @@ from discord import app_commands
 import os
 from dotenv import load_dotenv
 from setup.setup import *
-from commands import help_commands, ping_commands, quote_commands, pokemon_commands, credit_commands, trade_commands, tournament_commands, event_commands, profile_commands, admin_commands
+from commands import help_commands, ping_commands, quote_commands, pokemon_commands, credit_commands, trade_commands, tournament_commands, event_commands, profile_commands, admin_commands, ai_commands
 from data.minigames import active_pokemon_guesses, evaluate_guess
 
 # Load the .env file
@@ -35,6 +35,7 @@ event_commands.setup(tree)
 tournament_commands.setup(tree)
 profile_commands.setup(tree)
 admin_commands.setup(tree)  # Add the admin commands
+ai_commands.setup(tree)  # Add the AI commands
 
 @client.event
 async def on_ready():

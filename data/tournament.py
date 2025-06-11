@@ -108,7 +108,7 @@ def load_tournaments():
                 # Add tournament to active tournaments
                 active_tournaments[guild_id][tournament_name] = tournament
         
-        print(f"Loaded {len(active_tournaments)} guilds with tournaments")
+        # print(f"Loaded {len(active_tournaments)} guilds with tournaments")
     except Exception as e:
         print(f"Error loading tournaments: {e}")
         # Start with empty tournaments if there's an error

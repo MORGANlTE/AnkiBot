@@ -13,12 +13,27 @@ GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
 
 # Default models
 DEFAULT_MODELS = ["gemini-1.5-pro", "gemini-1.5-flash", "gemini-1.0-pro"]
-PREFERRED_MODEL = "gemini-1.5-flash"  # Default preferred model
 
 # Global variables to store the initialized model and state
 _model_initialized = False
 _model_instance = None
 _selected_model_name = None
+
+# Chat session variables
+chat_session = None
+files = []
+
+# Default history for chat
+default_history = [
+    {
+        "role": "user",
+        "parts": ["You are a helpful Discord bot assistant named AnkiBot. You're knowledgeable about Pokemon, trading card games, and general topics. Keep your answers concise, friendly, and informative. Use Discord formatting for responses."]
+    },
+    {
+        "role": "model",
+        "parts": ["I understand my role! As AnkiBot, I'll provide helpful, concise information about Pokémon, trading card games, and other topics. I'll keep my responses *friendly* and *informative*. How can I assist you today?"]
+    }
+]
 
 def configure_api():
     """Configure the Google Generative AI API"""
@@ -80,7 +95,7 @@ def select_best_model(models: List[str]) -> str:
 
 def initialize_model():
     """Initialize the Gemini model (should be called only once)"""
-    global _model_initialized, _model_instance, _selected_model_name
+    global _model_initialized, _model_instance, _selected_model_name, chat_session
     
     if _model_initialized:
         return True
@@ -98,6 +113,9 @@ def initialize_model():
         
         # Initialize Gemini model
         _model_instance = genai.GenerativeModel(_selected_model_name)
+        
+        # Initialize chat session with default history
+        chat_session = _model_instance.start_chat(history=default_history)
         
         _model_initialized = True
         return True
@@ -166,6 +184,57 @@ async def generate_pokemon_description(pokemon_name: str, pokemon_types: list,
     except Exception as e:
         print(f"Error in async wrapper for Pokémon description: {str(e)}")
         return None
+
+def _ask_question_sync(question: str) -> Optional[str]:
+    """Synchronous function to ask a question to the AI - runs in a thread"""
+    global _model_initialized, chat_session
+    
+    if not _model_initialized:
+        success = initialize_model()
+        if not success:
+            return "I'm sorry, but I couldn't initialize my AI capabilities at the moment."
+    
+    try:
+        # Send the question to the chat session
+        response = chat_session.send_message(question)
+        return response.text
+    except Exception as e:
+        print(f"Error asking question to AI: {str(e)}")
+        # If there's an error with the model, reset the initialization flag
+        _model_initialized = False
+        return f"I encountered an error while processing your question: {str(e)}"
+
+async def ask_question(question: str) -> str:
+    """Ask a question to the AI and get a response
+       This runs the API call in a background thread to avoid blocking the main thread"""
+    try:
+        # Run the synchronous function in a thread pool to avoid blocking
+        response = await asyncio.to_thread(
+            _ask_question_sync,
+            question
+        )
+        return response
+    except Exception as e:
+        print(f"Error in async wrapper for asking question: {str(e)}")
+        return f"Sorry, I encountered an error: {str(e)}"
+
+async def clear_history():
+    """Clear the chat history and reset to default"""
+    global chat_session, _model_instance, default_history
+    
+    if not _model_initialized:
+        success = initialize_model()
+        if not success:
+            return False
+    
+    try:
+        # Reset the chat session with default history
+        chat_session = _model_instance.start_chat(history=default_history)
+        files.clear()
+        return True
+    except Exception as e:
+        print(f"Error clearing chat history: {str(e)}")
+        return False
 
 # Initialize the model when the module is imported
 print("Initializing AI manager...")

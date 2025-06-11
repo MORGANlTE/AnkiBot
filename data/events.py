@@ -76,7 +76,7 @@ def load_events():
             for event_name, event_data in guild_events.items():
                 active_events[guild_id][event_name] = EventData.from_dict(event_data)
         
-        print(f"Loaded events for {len(active_events)} guilds")
+        # print(f"Loaded events for {len(active_events)} guilds")
     except Exception as e:
         print(f"Error loading events: {e}")
         # Start with empty events if there's an error

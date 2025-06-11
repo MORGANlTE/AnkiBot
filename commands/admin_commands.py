@@ -394,7 +394,7 @@ def setup(tree: app_commands.CommandTree):
     
     # Add guild-specific commands (only in ADMIN_GUILD_ID)
     ADMIN_GUILD_IDS = [discord.Object(id=guild_id) for guild_id in os.getenv("ADMIN_GUILD_IDS", "").split(", ")]
-    print(f"Admin guild IDs: {ADMIN_GUILD_IDS}")
+    # print(f"Admin guild IDs: {ADMIN_GUILD_IDS}")
     tree.add_command(badge_add_command, guilds=ADMIN_GUILD_IDS)
     tree.add_command(badge_list_command, guilds=ADMIN_GUILD_IDS)
     

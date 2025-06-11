@@ -325,7 +325,7 @@ def load_minigames():
         }
     ]
     
-    print(f"Loaded {len(minigames)} minigames")
+    # print(f"Loaded {len(minigames)} minigames")
 
 # Load minigames when module is imported
 load_minigames()
