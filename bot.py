@@ -48,7 +48,7 @@ async def on_ready():
         await tree.sync()
         has_synced = True
         print("Currently supporting {} guilds".format(len(client.guilds)))
-
+        
 @client.event
 async def on_message(message):
     # Ignore messages from the bot itself
@@ -59,5 +59,15 @@ async def on_message(message):
     channel_id = message.channel.id
     if channel_id in active_pokemon_guesses and active_pokemon_guesses[channel_id]['active']:
         await evaluate_guess(message.content, active_pokemon_guesses[channel_id]['pokemon_name'], message.channel, message.author)
+
+    # Get AI channels from environment variable
+    ai_channels = os.getenv("AI_CHANNELS", "").split(",")
+    if ai_channels and ai_channels[0]:  # Make sure it's not an empty string
+        # Convert channel IDs to integers for comparison
+        ai_channel_ids = [int(channel_id.strip()) for channel_id in ai_channels if channel_id.strip()]
+        
+        # If the message is in a designated AI channel, process it with the AI
+        if channel_id in ai_channel_ids:
+            await ai_commands.handle_ai_message(message)
 
 client.run(os.getenv("TOKEN"))

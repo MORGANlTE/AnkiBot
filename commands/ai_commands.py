@@ -77,5 +77,56 @@ async def ai_reset(interaction: discord.Interaction):
     else:
         await interaction.followup.send("Failed to reset AI conversation history.", ephemeral=True)
 
+async def handle_ai_message(message):
+    """Handle AI interactions in designated chat channels"""
+    # Ignore messages from bots
+    if message.author.bot:
+        return
+    
+    # Get response from AI
+    try:
+        # Send typing indicator while waiting for response
+        async with message.channel.typing():
+            response = await ask_question(message.content)
+            
+            # Split response if it exceeds Discord's message limit
+            if len(response) <= DISCORD_MESSAGE_LIMIT:
+                await message.channel.send(content=response)
+            else:
+                # Split by paragraphs or sentences to make more natural breaks
+                parts = re.split(r'\n\s*\n', response)
+                
+                current_part = ""
+                for part in parts:
+                    # If adding this part would exceed the limit, send the current part and start a new one
+                    if len(current_part) + len(part) + 2 > DISCORD_MESSAGE_LIMIT:
+                        if current_part:
+                            await message.channel.send(content=current_part)
+                            current_part = part
+                        else:
+                            # This single part is too long, need to split it further
+                            sentences = re.split(r'(?<=[.!?])\s+', part)
+                            for sentence in sentences:
+                                if len(current_part) + len(sentence) + 1 > DISCORD_MESSAGE_LIMIT:
+                                    if current_part:
+                                        await message.channel.send(content=current_part)
+                                        current_part = sentence
+                                    else:
+                                        # Even a single sentence is too long, just split by character limit
+                                        for i in range(0, len(sentence), DISCORD_MESSAGE_LIMIT):
+                                            chunk = sentence[i:i + DISCORD_MESSAGE_LIMIT]
+                                            await message.channel.send(content=chunk)
+                                else:
+                                    current_part += " " + sentence if current_part else sentence
+                    else:
+                        current_part += "\n\n" + part if current_part else part
+                
+                # Send any remaining content
+                if current_part:
+                    await message.channel.send(content=current_part)
+    except Exception as e:
+        print(f"Error in AI response: {str(e)}")
+        await message.channel.send("I encountered an error while processing your message.")
+
 def setup(tree: app_commands.CommandTree):
     tree.add_command(ai_group)
