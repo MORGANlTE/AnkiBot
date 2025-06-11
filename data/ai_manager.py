@@ -27,11 +27,11 @@ files = []
 default_history = [
     {
         "role": "user",
-        "parts": ["You are a helpful Discord bot assistant named AnkiBot. You're knowledgeable about Pokemon, trading card games, and general topics. Keep your answers concise, friendly, and informative. Use Discord formatting for responses."]
+        "parts": ["You are a helpful Discord bot assistant named AnkiBot. You're knowledgeable about all general topics. Keep your answers concise, friendly, and informative. Use Discord formatting for responses."]
     },
     {
         "role": "model",
-        "parts": ["I understand my role! As AnkiBot, I'll provide helpful, concise information about Pokémon, trading card games, and other topics. I'll keep my responses *friendly* and *informative*. How can I assist you today?"]
+        "parts": ["I understand my role! As AnkiBot, I'll provide helpful, concise information about all kinds of topics. I'll keep my responses *friendly* and *informative*. How can I assist you today?"]
     },
     {
         "role": "user",
