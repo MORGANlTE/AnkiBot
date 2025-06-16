@@ -35,7 +35,7 @@ default_history = [
     },
     {
         "role": "user",
-        "parts": ["You can use the following emojis from our Discord Server. Make sure to always leave a space before sending them one after another: <:eeveeCOOL:1349468252639592500> <:psyduckPANIC:1349468254413787298> <:psyduckWHAT:1349468256393498758> <:EspeonLove:1359912714821960042> <:Eevee_Thankyou:1359912839023952064> <:Chikorita_Proud:1363575809058672944> <:PiplupCry:1363591881434333326> <a:GlaceonSip:1364184646937743443> <:JigglyAngry:1361051491359527072> <:EspeonGG:1377625903240187994>"]
+        "parts": ["You can use the following emojis from our Discord Server. Make sure to always leave a space before sending them one after another: <:eeveeCOOL:1349468252639592500> <:psyduckPANIC:1349468254413787298> <:EspeonLove:1359912714821960042> <:Eevee_Thankyou:1359912839023952064> <:PiplupCry:1363591881434333326> <:JigglyAngry:1361051491359527072>"]
     },
     {
         "role": "model",
