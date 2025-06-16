@@ -35,7 +35,7 @@ default_history = [
     },
     {
         "role": "user",
-        "parts": ["You can use the following emojis from our Discord Server. Make sure to always leave a space before sending them one after another: <:eeveeCOOL:1349468252639592500> <:psyduckPANIC:1349468254413787298> <:EspeonLove:1359912714821960042> <:Eevee_Thankyou:1359912839023952064> <:PiplupCry:1363591881434333326> <:JigglyAngry:1361051491359527072>"]
+        "parts": ["You can use the following emojis from our Discord Server. Make sure to always leave a space before sending them one after another: <coffeepikachu>, <chikoritaproud>, <cutepikachu>, <espeonthrowconfetti>, <espeonlove>, <espeongg>, <evillaughing>, <jigglyangry>, <jigglypuffdark>, <leafeongiggle>, <glaceonsip>, <pikachulove>, <piplupsmirk>, <pipluphappy>, <piplupangry>, <piplupcry>, <rowletfacepalm>, <sobblecry>, <squirtlecool>, <squirtlehype>, <squirtlelaughing>, <sylveonkiss>, <bulbasaurroll>, <eeveecool>, <pikaomg>, <pikasmirk1>. I have set it up so in the frontend it gets replaced by their respective emojis, so you can use them in your responses."]
     },
     {
         "role": "model",
@@ -226,6 +226,7 @@ async def ask_question(author: str, question: str) -> str:
             author,
             question
         )
+        response = add_emojis_to_response(response)
         return response
     except Exception as e:
         print(f"Error in async wrapper for asking question: {str(e)}")
@@ -248,6 +249,47 @@ async def clear_history():
     except Exception as e:
         print(f"Error clearing chat history: {str(e)}")
         return False
+    
+def add_emojis_to_response(response: str) -> str:
+    """Add emojis to the AI response based on certain keywords"""
+    if not response:
+        return response
+    
+    # Define a mapping of keywords to emojis
+    emoji_mapping = {
+        "<coffeepikachu>": "<:Coffee_Pikachu:1364184526439583764>",
+        "<chikoritaproud>": "<:Chikorita_Proud:1363575809058672944>",
+        "<cutepikachu>": "<:Cute_Pikachu:1377625744028729405>",
+        "<espeonthrowconfetti>": "<a:Espeon_throw_confetti:1377625544534790266>",
+        "<espeonlove>": "<:EspeonLove:1359912714821960042>",
+        "<espeongg>": "<:EspeonGG:1377625903240187994>",
+        "<evillaughing>": "<:Evil_Laughing:1363591607177318570>",
+        "<jigglyangry>": "<:JigglyAngry:1361051491359527072>",
+        "<jigglypuffdark>": "<:JigglypuffDark:1363591631286173836>",
+        "<leafeongiggle>": "<a:LeafeonGiggle:1377618580404961311>",
+        "<glaceonsip>": "<a:GlaceonSip:1364184646937743443>",
+        "<pikachulove>": "<:PikachuLove:1377625938426200174>",
+        "<piplupsmirk>": "<:PiplupSmirk:1364219689743548426>",
+        "<pipluphappy>": "<:PiplupHappy:1363591841001246920>",
+        "<piplupangry>": "<:Piplup_Angry:1377618257644621914>",
+        "<piplupcry>": "<:PiplupCry:1363591881434333326>",
+        "<rowletfacepalm>": "<:RowletFacepalm:1361047974293016576>",
+        "<sobblecry>": "<:SobbleCry:1363592241439969390>",
+        "<squirtlecool>": "<:Squirtle_cool:1364186106664452176>",
+        "<squirtlehype>": "<a:Squirtle_Hype:1361535931542143046>",
+        "<squirtlelaughing>": "<:Squirtle_laughing:1377611394685341726>",
+        "<sylveonkiss>": "<a:SylveonKiss:1377618330650673254>",
+        "<bulbasaurroll>": "<a:bulbasaurroll:1368302131613925386>",
+        "<eeveecool>": "<:eeveeCOOL:1349468252639592500>",
+        "<pikaomg>": "<a:pikaOMG:1364185634180169758>",
+        "<pikasmirk1>": "<:pikasmirk1:1360861348518563870>"
+    }
+    
+    # Replace keywords with corresponding emojis
+    for keyword, emoji in emoji_mapping.items():
+        response = re.sub(rf'\b{keyword}\b', emoji, response, flags=re.IGNORECASE)
+    
+    return response
 
 # Initialize the model when the module is imported
 print("Initializing AI manager...")
