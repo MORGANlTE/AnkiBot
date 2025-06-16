@@ -60,6 +60,9 @@ async def on_message(message):
     if channel_id in active_pokemon_guesses and active_pokemon_guesses[channel_id]['active']:
         await evaluate_guess(message.content, active_pokemon_guesses[channel_id]['pokemon_name'], message.channel, message.author)
 
+    if message.content.startswith(".") or message.content.startswith("#") or message.content.startswith("!"):
+        return
+
     # Get AI channels from environment variable
     ai_channels = os.getenv("AI_CHANNELS", "").split(",")
     if ai_channels and ai_channels[0]:  # Make sure it's not an empty string
