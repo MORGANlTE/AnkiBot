@@ -43,6 +43,45 @@ default_history = [
     }
 ]
 
+def load_faq_text():
+    """Load FAQ text from faq.txt in the data folder"""
+    faq_path = os.path.join(os.path.dirname(__file__), "faq.txt")
+    try:
+        with open(faq_path, "r", encoding="utf-8") as f:
+            return f.read()
+    except Exception as e:
+        print(f"Error loading FAQ text: {e}")
+        return ""
+
+# Special FAQ preset for forum threads
+faq_history = [
+    {
+        "role": "user",
+        "parts": [
+            "You are AnkiBot, a Discord bot FAQ assistant. You ONLY answer questions about Ankimon, its features, and common issues. If you do not know the answer, or if the question is not about the bot, you MUST reply with the string 'none' (no formatting, no explanation). Your answers should be concise, factual, and based only on the following FAQ knowledge base. Do NOT make up answers."
+        ]
+    },
+    {
+        "role": "model",
+        "parts": [
+            "Understood. I will only answer if I know the answer from the FAQ. Otherwise, I will reply with 'none'."
+        ]
+    },
+    {
+        "role": "user",
+        "parts": [
+            # Inject the loaded FAQ text here
+            f"FAQ:\n{load_faq_text()}"
+        ]
+    },
+    {
+        "role": "model",
+        "parts": [
+            "Ready to answer FAQ questions."
+        ]
+    }
+]
+
 def configure_api():
     """Configure the Google Generative AI API"""
     if not GEMINI_API_KEY:
@@ -294,3 +333,46 @@ def add_emojis_to_response(response: str) -> str:
 # Initialize the model when the module is imported
 print("Initializing AI manager...")
 initialize_model()
+
+# FAQ chat session variable
+faq_chat_session = None
+
+def initialize_faq_model():
+    """Initialize a separate chat session for FAQ preset"""
+    global _model_initialized, _model_instance, faq_chat_session
+    if not _model_initialized:
+        success = initialize_model()
+        if not success:
+            return False
+    try:
+        faq_chat_session = _model_instance.start_chat(history=faq_history)
+        return True
+    except Exception as e:
+        print(f"Error initializing FAQ chat session: {str(e)}")
+        return False
+
+def answer_faq_question_sync(question: str) -> str:
+    """Synchronous function to answer a FAQ question using the FAQ preset"""
+    global faq_chat_session
+    if faq_chat_session is None:
+        success = initialize_faq_model()
+        if not success:
+            return "none"
+    try:
+        response = faq_chat_session.send_message(question)
+        # The model is instructed to reply with 'none' if it doesn't know the answer
+        return response.text.strip()
+    except Exception as e:
+        print(f"Error answering FAQ question: {str(e)}")
+        # Reset FAQ session on error
+        faq_chat_session = None
+        return "none"
+
+async def answer_faq_question(question: str) -> str:
+    """Async wrapper for answering FAQ questions"""
+    try:
+        response = await asyncio.to_thread(answer_faq_question_sync, question)
+        return response
+    except Exception as e:
+        print(f"Error in async FAQ answer: {str(e)}")
+        return "none"

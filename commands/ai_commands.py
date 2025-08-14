@@ -1,6 +1,6 @@
 import discord
 from discord import app_commands
-from data.ai_manager import ask_question, clear_history
+from data.ai_manager import ask_question, clear_history, answer_faq_question
 import re
 
 # Command Group
@@ -17,7 +17,7 @@ async def ai_ask(interaction: discord.Interaction, question: str):
     await interaction.response.defer()
     
     # Get the response from the AI
-    response = await ask_question(question)
+    response = await ask_question(str(interaction.user), question)
     
     # Send the question
     await interaction.followup.send(embed=discord.Embed(
@@ -170,6 +170,10 @@ async def send_chunked_message(channel, text):
                 print(f"Error sending message chunk: {e}")
                 # Send a simpler message if still getting errors
                 await channel.send(f"Message part {i+1}/{len(chunks)} - failed to send due to Discord limits.")
+
+async def handle_faq_message(message: str) -> str:
+    """Handle FAQ-style AI interactions for forum threads. Returns 'none' if not in FAQ."""
+    return await answer_faq_question(message)
 
 def setup(tree: app_commands.CommandTree):
     tree.add_command(ai_group)

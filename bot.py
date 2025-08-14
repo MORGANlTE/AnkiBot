@@ -22,6 +22,8 @@ guilds = setup_guilds()
 has_synced = False
 client = discord.Client(intents=intents)
 tree = app_commands.CommandTree(client)
+ai_channels = os.getenv("AI_CHANNELS", "").split(",")
+forum_channels = os.getenv("FORUM_CHANNELS", "").split(",")
 
 # Register command groups
 help_commands.setup(tree)
@@ -64,7 +66,6 @@ async def on_message(message):
         return
 
     # Get AI channels from environment variable
-    ai_channels = os.getenv("AI_CHANNELS", "").split(",")
     if ai_channels and ai_channels[0]:  # Make sure it's not an empty string
         # Convert channel IDs to integers for comparison
         ai_channel_ids = [int(channel_id.strip()) for channel_id in ai_channels if channel_id.strip()]
@@ -75,5 +76,18 @@ async def on_message(message):
             nickname = author.display_name
 
             await ai_commands.handle_ai_message(str(nickname + " user full name: " + str(author)), message)
+
+@client.event
+async def on_thread_create(thread :discord.Thread):
+    if str(thread.parent_id) in forum_channels and forum_channels[0]:
+        tags = thread.applied_tags
+        title = thread.name
+        first_message = await thread.fetch_message(thread.id)
+        faq_query = f"**Thread Title:** {title}\n**Message:** {first_message.content}"
+        response = await ai_commands.handle_faq_message(faq_query)
+        if response and response.lower() != "none":
+            await thread.send(response)
+            await thread.send("-# This thread has been answered by our intelligent FAQ system. If you have any further questions, feedback, or need assistance with anything else, feel free to share them with the support team.")
+
 
 client.run(os.getenv("TOKEN"))

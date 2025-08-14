@@ -1,0 +1,251 @@
+How to get shiny Pokemon:
+
+Shinies are available in Ankimon if you have the v1.36 or newer prerelease/experimental version of Ankimon! Just like the Pokemon games, you have a **1/4096** = 0.024% chance of catching a shiny! You'll see them with a star ⭐ in your collection.
+
+You can also catch shinies by participating in the monthly challenge and the meme of the week contest!
+
+How to find out your ANKIMON version:
+
+- open the add-on folder
+- you will find a manifest.json file, open it
+- see the value for the "version"
+
+If it has -E it means that it is an experimental version!
+
+In the newer versions, i.e. after v1.4, it will have the version included in the ankimon version dialog box available in menu -> help -> Ankimon Version.
+
+Catching starter pokemon in ankimon:
+
+## **NO**, starters are the rarest Pokemon you can have in Ankimon! 
+
+Currently you cannot catch starters in Ankimon through wild Pokemon encounters. However, there are some ways to get starters other than catching:
+
+-  winning our **Meme of the Week** contest! 
+- getting a VERY high level on the **Monthly Pokemon Challenge** 
+- trading with someone who has a starter Pokemon
+
+Getting our ANKI server tag:
+
+Please add the 🩷 **ANKI** server tag to represent our server on your Discord profile!
+
+1. Make sure you are on latest version of Discord, you can also use Discord from browser!
+2. Go to **Discord Settings** ➡️ **Profiles**, and scroll down to the **Server Tags** section (see image below)
+3. Choose **[🩷 ANKI]** from Ankimon as your server tag!
+
+Now it will be on your profile for everyone to see :)
+
+
+How to backup/transfer progress in Ankimon:
+
+**ALWAYS KEEP A BACKUP BEFORE YOUR UPDATE!**
+
+In Anki, go to ADD-ONS and click on Ankimon, then press VIEW FILES from the menu!
+
+Alternatively, In the directory where Anki is stored, there will be a folder "addons" or "addons21", which has the Ankimon folder named "1908235722", 
+
+ inside the folder there is "user_files" folder
+
+Make sure you backup the files **badges.json, items.json, mainpokemon.json, mypokemon.json, teams.json, data.json**, and in the Ankimon folder (outside user_files) also backup **meta.json** 
+
+In Linux you may find this file at ~/.local/share/Anki2/addons21/1908235722 or 
+~/.var/app/net.ankiweb.Anki/data/Anki2/addons21/1908235722
+
+
+How to get ankimon experimental version:
+
+I have a GitHub page where developers (including me and <@953348902327836693>) add and test the latest features and bugfixes before they are added to the OFFICIAL Ankimon by Unlucky. These experimental versions can be buggy, but they have the latest features and changes!
+
+Go to my fork (copy) of the Ankimon GitHub (https://github.com/h0tp-ftw/ankimon) for all of these. It should have a RELEASE on the right with the latest changes! It is marked as -E because it is experimental.
+
+How to remove Ankimon look from the reviewer:
+
+In latest prerelease, you can **HIDE ANKIMON GUI ENTIRELY** by pressing **8**. This way you can hide it and get it back just by pressing 8!
+
+To reduce distraction, you can also turn off / change some of the following settings:
+
+- animate time
+- styling in reviewer
+- HP bar configuration
+- popup on defeat
+- reviewer image as GIF
+- show text message box in reviewer
+- show main pokemon in reviewer
+- XP bar configuration
+
+If you change all of this, the only thing you'll see is the image and status of the opponent pokemon, nothing else - no popups, bars, HP, XP, etc.
+
+How to setup ankimon leaderboard:
+
+You can sync with the **Ankimon Leaderboard** to compete with other Ankimon trainers! Here's how to set it up.
+
+1. Get the newer prerelease of Ankimon (v1.36 or higher)
+2. Make sure that Ankimon Leaderboard is enabled in Ankimon Settings (true)
+3. Open up https://leaderboard.ankimon.com and press **Register Trainer**. Pick a username and favorite word (like a password), it will give you your username and *API key*.
+## DO NOT FORGET your favorite word!!!!!
+4. In Ankimon menu, press Ankimon Leaderboard Credentials and enter your username and API key.
+5. Change your name by going to Ankimon settings, and changing "trainer name".
+6. Everytime you SYNC, your Ankimon data will go to the leaderboard!
+
+Please let us know if there are any bugs in this version! If you test these experimental versions and let us know your experience, it would be very helpful for Ankimon updates!
+
+
+How to get ankimon pre-release versions:
+
+https://github.com/Unlucky-Life/ankimon/releases
+
+There is a RELEASES tab on right, click on the blue button below the release (like +54 releases\).
+
+You can find the releases in "Assets" as a .ankiaddon format file.
+
+Always remember to backup!
+
+
+Where are the ankimon files stored:
+
+In the directory where Anki is stored, there will be a folder "addons" or "addons21", which has the Ankimon folder named "1908235722", and inside the folder there is "user_files" folder.
+
+__Windows__: %APPDATA%\Anki2\addons21\1908235722
+
+__Linux__: ~/.local/share/Anki2/addons21/1908235722 or 
+~/.var/app/net.ankiweb.Anki/data/Anki2/addons21/1908235722
+
+The easiest way to find is to go to Add-ons -> click **View Files** to open the directory
+
+Changing languages in ankimon:
+
+You can choose the language by changing the ID number in Ankimon settings:
+
+    | ID  | Language               | Official |
+
+    | 1   | **Japanese (Hir & Kata )** | Yes      |
+
+    | 2   | **Japanese (Roomaji)**     | Yes      |
+
+    | 3   | **Korean**                 | Yes      |
+
+    | 4   | **Chinese (Traditional)**  | Yes      |
+
+    | 5   | **French**                 | Yes      |
+
+    | 6   | **German**                 | Yes      |
+
+    | 7   | **Spanish**                | Yes      |
+
+    | 8   | **Italian**                | Yes      |
+
+    | 9   | *English*                | Yes      |
+
+    | 10  | **Czech**                  | No       |
+
+    | 11  | **Japanese**               | Yes      |
+
+    | 12  | **Chinese (Simplified)**   | Yes      |
+
+    | 13  | **Portuguese (Brazil)**    | No       |
+
+Fixing missing sprites, sprites not found, or downloading resources errors:
+
+There are two ways to add the missing sprite files.
+
+1. Go to Github and download the latest prerelease (https://github.com/Unlucky-Life/ankimon/releases). It is a big file (500+ MB) but it will have the resources and files already in it.
+
+2. You can download zip file for the source code for the prerelease, then add the resource files inside it directly to your current Ankimon installation.
+
+You can access the add-ons folder by going to the Tools>Add-ons then click on "Ankimon (by Unlucky-life)" menu item in the main Anki window. Click on the View Files button, and a folder will pop up. 
+
+from there you can go to => user_files => back_default
+
+in that folder you just copy the files from the zip file that you have downloaded (unzip a file = decompressing a zip file to a normal folder - works by right clicking and selecting unzip file)
+
+Money and Item Shop functionality:
+
+MONEY
+You can earn Ankimon money by reaching your daily Anki card goal (change in Ankimon settings). If you hit that goal, you will get some money! This way you can earn once a day -- if you reach the goal daily you get money daily!
+ITEM SHOP
+Every day, you will get access to 6 items to buy! You can buy them using Ankimon money. The 3 daily items are random - and there are 3 standard items - Pokeball, Potion, and Rare Candy! The items can give you different advantages, such as restoring HP and evolving your Pokemon! 
+
+Ankimon crashing for some reason:
+
+First, if it gives you an error message or debug info, please share that here!
+Second, many bugs are fixed in the experimental release before they come to the stable, so they should try out the experimental.
+
+
+Getting Ankimon rich presence:
+
+In the latest pre-releases, you can enable this setting to show Playing Ankimon in your Discord! Here's how to do it:
+In your Ankimon settings, enable the option for Discord Rich Presence (should be at the bottom).
+Restart your Anki and it should work!!!!
+Keep in mind that
+you have to disable other Discord rich presence add-ons like Ankicord for this to work
+it starts showing AFTER you do atleast one review!!!! If you're not doing any reviews, it will not show.
+using this can increase the loading time for Anki, therefore, disable it if you don't want that,
+if it is showing that your Discord client is NOT connected, try opening Discord before you open Anki!
+
+Levelling pokemon past lv 100:
+
+In settings, set misc.remove_level_cap to true.
+Now your Pokemon can get XP even beyond level 100.
+
+What kind of pokemon can be caught:
+
+You can catch almost ALL the Pokemon, but there are some exceptions:
+there are no SPECIAL VARIANTS OTHER than shiny, like dark, chrome, etc.
+the STARTER POKEMON and their evolutions cannot be caught. You can only get them from your first starter pokemon (or trading), or other special means.
+legendaries can be caught, but harder to find.
+
+
+{
+  "tips": [
+    "Show off your 'Playing Ankimon' status on Discord! Enable 'Discord Rich Presence' in the settings.",
+    "You can make battles happen automatically without any pop-ups! Just turn on 'Automatic Battle' in the settings!",
+    "Set a 'Daily Card Average' in the settings, and you'll get a sweet Ankimon cash prize daily if you reach it!",
+    "You can buy items with Ankimon cash! Check out the Item Shop in Ankimon -> Game -> Item Shop!",
+    "Got some cool items? Use 'Give a Held Item' in your Pokémon collection to let your Pokémon use it in battle!",
+    "In your Pokémon collection, you can mark your Pokémon as 'Favorite' to keep track of them easily!",
+    "Did you know you can control the pace of battles? Adjust the 'Cards per Round' setting to change how many cards you review before an attack!",
+    "Want a cleaner look in the reviewer? You can hide the 'Catch' and 'Defeat' buttons by disabling 'Reviewer Buttons' in the settings.",
+    "Too distracting? Hide the Ankimon interface in reviewer by pressing '8' !",
+    "You can set your own shortcuts for catching and defeating Pokémon! Look for the 'Defeat Shortcut Key' and 'Catch Shortcut Key' settings.",
+    "Open the Ankimon window (default is Ctrl+N or Cmd+N) to see the action live!",
+    "How does your Pokédex look? Open it up via Ankimon -> Collection -> Open Pokédex!",
+    "Check out the badges you have acquired! Go to Ankimon -> Profile -> Achievements!",
+    "Want to use your Ankimon Pokémon in a PokemonShowdown battle? Go to Ankimon -> Export to export your collection!",
+    "Flex the Pokémon you have! Go to Ankimon -> Export and export to PokePaste so that others can see your collection!",
+    "Check out the changelog for your Ankimon version via Ankimon -> Help -> Ankimon Version!",
+    "Want to choose which move to use? Enable 'Allow to choose moves' in the settings to select your Pokémon's attack in each round!",
+    "Bring your battles to life with animations! Enable 'Animate Time' in the settings to see your Pokémon's movements!",
+    "Check out Ankimon -> Help -> Ankimon Credits to see the other projects that helped Ankimon come to life!",
+    "Choose your cool trainer sprite by going to Ankimon -> Game -> Choose Trainer Sprite!",
+    "You can enable XP Share in Ankimon for other Pokémon to gain XP along with your main Pokémon! Go to Ankimon -> Game -> Choose Pokemon Team to set it up!",
+    "Go to Ankimon -> Profile -> Trainer Card to see your trainer profile!",
+    "Ankimon is Free and Open Source Software (FOSS)! You can join our development team through the Ankimon Discord.",
+    "Want to see your Pokémon collection come alive? Enable 'GIF in Collection' to display animated sprites!",
+    "You can add some flair to the reviewer by enabling 'Styling in Reviewer'. This will add custom styling to the Ankimon elements!",
+    "Customize the look of the HP bar in the reviewer! You can toggle it on or off with the 'HP Bar' setting.",
+    "Want a confirmation pop-up when you defeat a Pokémon? You can enable this with the 'Pop-up on Defeat' setting!",
+    "You can adjust the thickness of the HP bar in the reviewer to make it more visible. Check out the 'Reviewer HP Bar Thickness' setting!",
+    "See your Pokémon in action! Enable 'Reviewer Image GIF' to show animated GIFs of your Pokémon during reviews.",
+    "Battle messages too distracting for you? Turn off the 'Reviewer Text Message' setting!",
+    "You can change how long battle messages are displayed in the reviewer. Adjust it with the 'Reviewer Text Message Time' setting!",
+    "Want to see your main Pokémon appear in the reviewer? Enable the 'Show Main Pkmn in Reviewer' setting!",
+    "You can decide whether to see the front or back of your main Pokémon in the reviewer with the 'View Main Front' setting!",
+    "Change the location of the XP bar through the 'XP Bar' setting!",
+    "Hear the thrill of battle! Enable 'Sound Effects' in the 'Audio' settings to add sound to your Ankimon experience!",
+    "You can enable or disable Pokémon cries in the 'Audio' settings. Look for the 'Sounds' option!",
+    "Make your study sessions more epic with battle cries! You can enable it in the 'Battle Sounds' setting.",
+    "In the Ankimon Discord server, you can join the Library voice channels to study with other trainers! ",
+    "You can choose which Pokémon generations to encounter in Ankimon! Enable or disable the 'Gen 1-9' options in the settings.",
+    "Got to Lv 100 already? Disable the 'Remove Level Cap' setting to go past Lv 100!",
+    "See how you stack up against other Ankimon trainers! Check out the 'Leaderboard' option in settings to set it up.",
+    "You can change the language of the Ankimon addon. Look for the 'Language' option in the settings!",
+    "You can customize what information is shown in your Discord Rich Presence. Check out the 'Discord Rich Presence Text' setting!",
+    "You can set your trainer's name in the settings. Choose a name that fits your style with the 'Trainer Name' setting!"
+  ]
+}
+
+
+
+
+
+
+
